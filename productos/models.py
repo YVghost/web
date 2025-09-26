@@ -14,3 +14,12 @@ class Producto(models.Model):
 
     def __str__(self):
         return f"{self.nombre} - ${self.precio}"
+
+class Pedido(models.Model):
+    comprador = models.ForeignKey(Estudiante, on_delete=models.CASCADE)
+    fecha = models.DateTimeField(auto_now_add=True)
+
+class DetallePedido(models.Model):
+    pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE)
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    cantidad = models.PositiveIntegerField(default=1)

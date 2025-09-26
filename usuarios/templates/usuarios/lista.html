@@ -1,0 +1,8 @@
+<h1>Estudiantes registrados</h1>
+<ul>
+    {% for e in estudiantes %}
+    <li>
+        <a href="{% url 'perfil' e.banner_id %}">{{ e.nombres }} {{ e.apellidos }} ({{ e.apodo }})</a>
+    </li>
+    {% endfor %}
+</ul>
