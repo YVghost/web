@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+
+{% block title %}Registro - MarketU{% endblock %}
+
+{% block body_class %}register-page{% endblock %}
+
+{% block content %}
+<style>
+    .register-form-container {
+        background: rgba(15, 15, 15, 0.7);
+        backdrop-filter: blur(12px);
+        border-radius: 15px;
+        padding: 40px 30px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+    }
+
+    .register-form-container h1 {
+        color: #fff;
+        text-align: center;
+        margin-bottom: 30px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        font-size: 28px;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+
+    .form-row {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+        position: relative;
+        flex: 1;
+    }
+
+    .form-group label {
+        display: block;
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 8px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .form-group input, .form-group select {
+        width: 100%;
+        padding: 12px 15px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        color: white;
+        font-size: 16px;
+        transition: all 0.3s ease;
+    }
+
+    .form-group input:focus, .form-group select:focus {
+        outline: none;
+        border-color: #4cc9f0;
+        background: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 0 10px rgba(76, 201, 240, 0.3);
+    }
+
+    .form-group input::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+    }
+
+    .form-group select option {
+        background: #1a1a2e;
+        color: white;
+    }
+
+    .register-btn {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(to right, #4361ee, #3a0ca3);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+        letter-spacing: 1px;
+    }
+
+    .register-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 7px 15px rgba(0, 0, 0, 0.4);
+        background: linear-gradient(to right, #3a56d4, #2f0b8a);
+    }
+
+    .register-messages {
+        margin-top: 20px;
+        padding: 12px;
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        text-align: center;
+        border-left: 4px solid #4cc9f0;
+    }
+
+    .auth-footer {
+        text-align: center;
+        margin-top: 25px;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 14px;
+    }
+
+    .auth-footer a {
+        color: #4cc9f0;
+        text-decoration: none;
+        transition: color 0.3s ease;
+        font-weight: 500;
+    }
+
+    .auth-footer a:hover {
+        color: #3a86ff;
+        text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+        .form-row {
+            flex-direction: column;
+            gap: 0;
+        }
+        
+        .register-form-container {
+            padding: 30px 20px;
+        }
+    }
+</style>
+
+<div class="register-form-container">
+    <h1>Registro de Estudiante</h1>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="nombres">Nombres:</label>
+                <input type="text" id="nombres" name="nombres" placeholder="Tus nombres" required>
+            </div>
+            <div class="form-group">
+                <label for="apellidos">Apellidos:</label>
+                <input type="text" id="apellidos" name="apellidos" placeholder="Tus apellidos" required>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="apodo">Apodo:</label>
+            <input type="text" id="apodo" name="apodo" placeholder="Tu apodo de usuario" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="correo">Correo:</label>
+            <input type="email" id="correo" name="correo" placeholder="Tu correo electrónico" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Contraseña:</label>
+            <input type="password" id="password" name="password" placeholder="Crea una contraseña segura" required>
+        </div>
+        
+        <button type="submit" class="register-btn">Registrarse</button>
+    </form>
+    
+    {% for message in messages %}
+    <div class="register-messages">
+        <p>{{ message }}</p>
+    </div>
+    {% endfor %}
+    
+    <div class="auth-footer">
+        <p>¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión aquí</a></p>
+    </div>
+</div>
+{% endblock %}

@@ -24,7 +24,9 @@ def redirect_root(request):
     return redirect("login")  # nombre de tu URL de login
 
 urlpatterns = [
-    path("", redirect_root),  # ahora / redirige a /usuarios/login/
+    path("", redirect_root),  
+    path('admin/', admin.site.urls),
     path("usuarios/", include("usuarios.urls")),
+    path("productos/", include("productos.urls")),
 ]
 

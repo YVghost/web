@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from usuarios.models import Estudiante  # Relación con el vendedor
 
 class Producto(models.Model):
@@ -8,6 +9,7 @@ class Producto(models.Model):
     publicado_en = models.DateTimeField(auto_now_add=True)
     vendedor = models.ForeignKey(Estudiante, on_delete=models.CASCADE)
     imagen = models.ImageField(upload_to='productos/', null=False, blank=False)
+    fecha_registro = models.DateTimeField(default=timezone.now, editable=False)
 
     class Meta:
         ordering = ['-publicado_en']

@@ -37,11 +37,6 @@ def logout_estudiante(request):
     request.session.flush()
     return redirect("login")
 
-## listar
-
-def lista_estudiantes(request):
-    estudiantes = Estudiante.objects.all()
-    return render(request, "usuarios/lista.html", {"estudiantes": estudiantes})
 
 ## perfil
 

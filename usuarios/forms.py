@@ -6,4 +6,4 @@ class RegistroEstudianteForm(forms.ModelForm):
 
     class Meta:
         model = Estudiante
-        fields = ['banner_id','nombres', 'apellidos', 'apodo', 'correo', 'carrera', 'password']
+        fields = ['nombres', 'apellidos', 'apodo', 'correo', 'password']

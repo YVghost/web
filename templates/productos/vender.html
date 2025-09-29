@@ -1,0 +1,17 @@
+<!-- vender.html -->
+{% extends 'base.html' %}
+
+{% block title %}Vender - MarketU{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Vender Producto</h1>
+    <p>Publica tu producto para venderlo en la comunidad</p>
+</div>
+
+<!-- Formulario para vender -->
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <!-- Campos del formulario -->
+</form>
+{% endblock %}
