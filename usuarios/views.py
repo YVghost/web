@@ -1,45 +1,63 @@
-from django.shortcuts import render, redirect
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from .forms import RegistroEstudianteForm
 from .models import Estudiante
-from django.contrib import messages
 
-## register
-
+## REGISTRO 
 def registro(request):
     if request.method == "POST":
         form = RegistroEstudianteForm(request.POST)
         if form.is_valid():
-            estudiante = form.save(commit=False)
-            estudiante.save()
-            return redirect("registro")
+            estudiante = form.save()
+            
+            # Autenticar automáticamente al usuario
+            user = authenticate(
+                username=form.cleaned_data['correo'],
+                password=form.cleaned_data['password1']
+            )
+            if user:
+                login(request, user)
+                messages.success(request, "¡Cuenta creada exitosamente!")
+                return redirect("explorar")  
     else:
         form = RegistroEstudianteForm()
+    
     return render(request, "usuarios/registro.html", {"form": form})
 
-## login
-
+## LOGIN - (usando Django Auth)
 def login_estudiante(request):
     if request.method == "POST":
-        correo = request.POST.get("correo")
-        apodo = request.POST.get("apodo")
-        try:
-            estudiante = Estudiante.objects.get(correo=correo, apodo=apodo)
-            request.session["estudiante_id"] = estudiante.banner_id
-            return redirect("perfil", banner_id=estudiante.banner_id)
-        except Estudiante.DoesNotExist:
-            messages.error(request, "Correo o apodo incorrecto")
+        # Usar 'username' y 'password' que espera Django
+        username = request.POST.get("username")  
+        password = request.POST.get("password")
+        
+        # Autenticar con el sistema seguro de Django
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            login(request, user)
+            messages.success(request, f"¡Bienvenido de vuelta, {user.first_name}!")
+            return redirect("explorar")  # Cambia por tu vista principal
+        else:
+            messages.error(request, "Correo o contraseña incorrectos")
+    
     return render(request, "usuarios/login.html")
 
-## logout|
-
+## LOGOUT - Corregido (usando Django Auth)
 def logout_estudiante(request):
-    request.session.flush()
+    logout(request)
+    messages.success(request, "Has cerrado sesión exitosamente")
     return redirect("login")
 
-
-## perfil
-
+## PERFIL
+@login_required
 def perfil(request, banner_id):
-    estudiante = get_object_or_404(Estudiante, banner_id=banner_id)
-    return render(request, "usuarios/perfil.html", {"estudiante": estudiante})
+    try:
+        estudiante = Estudiante.objects.get(user=request.user, banner_id=banner_id)
+        return render(request, "usuarios/perfil.html", {"estudiante": estudiante})
+    except Estudiante.DoesNotExist:
+        messages.error(request, "Perfil no encontrado")
+        return redirect("explorar")
