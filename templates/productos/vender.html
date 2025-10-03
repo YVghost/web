@@ -62,7 +62,6 @@
                         {{ form.categoria }}
                     </div>
                     
-                    <!-- Condición - Se oculta para alimentos -->
                     <div class="form-group" id="condicion-group">
                         <label for="{{ form.condicion.id_for_label }}">Condición *</label>
                         {{ form.condicion }}
@@ -82,9 +81,9 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="{{ form.stock.id_for_label }}" id="stock-label">Cantidad Disponible *</label>
+                        <label for="{{ form.stock.id_for_label }}">Cantidad Disponible *</label>
                         {{ form.stock }}
-                        <small class="help-text" id="stock-help">Número de unidades disponibles</small>
+                        <small class="help-text">Número de unidades disponibles</small>
                     </div>
                 </div>
 
@@ -93,21 +92,7 @@
                     <label for="{{ form.es_multiple.id_for_label }}">
                         Tengo múltiples unidades de este producto
                     </label>
-                    <small class="help-text">{{ form.es_multiple.help_text }}</small>
-                </div>
-
-                <!-- Información adicional para alimentos -->
-                <div class="alimentos-info" id="alimentos-info" style="display: none;">
-                    <div class="alert alert-info">
-                        <h4>🍕 Información para Productos Alimenticios</h4>
-                        <p>Para productos de comida, asegúrate de:</p>
-                        <ul>
-                            <li>Mencionar la fecha de preparación/caducidad</li>
-                            <li>Especificar ingredientes y alérgenos</li>
-                            <li>Indicar si requiere refrigeración</li>
-                            <li>Mantener altos estándares de higiene</li>
-                        </ul>
-                    </div>
+                    <small class="help-text">Marca esta opción si tienes más de una unidad idéntica para vender</small>
                 </div>
             </div>
 
@@ -120,7 +105,7 @@
                     {{ form.tipo_envio }}
                     <div class="envio-info">
                         <p><strong>📍 Tu ubicación:</strong> {{ user.estudiante.get_universidad_display }}</p>
-                        <small class="help-text">{{ form.tipo_envio.help_text }}</small>
+                        <small class="help-text">Selecciona cómo prefieres entregar el producto</small>
                     </div>
                 </div>
             </div>
@@ -139,7 +124,7 @@
                         </div>
                         {{ form.imagenes }}
                     </div>
-                    <small class="help-text">{{ form.imagenes.help_text }}</small>
+                    <small class="help-text">Selecciona hasta 5 imágenes de tu producto</small>
                     
                     <div class="image-preview" id="imagePreview">
                         <!-- Las previsualizaciones se agregarán aquí -->
@@ -154,7 +139,7 @@
                 <div class="form-group">
                     <label for="{{ form.tags.id_for_label }}">Palabras Clave</label>
                     {{ form.tags }}
-                    <small class="help-text">{{ form.tags.help_text }}</small>
+                    <small class="help-text">Separa las etiquetas con comas</small>
                     <div class="tags-examples">
                         <strong>Ejemplos:</strong> 
                         <span class="tag-example">libro ingenieria</span>
@@ -405,10 +390,6 @@
         margin: 0 0 5px 0;
         color: #4CAF50;
         font-weight: 500;
-    }
-
-    .alimentos-info {
-        margin-top: 20px;
     }
 
     /* Upload de archivos */
@@ -696,54 +677,6 @@
         const fileInput = document.querySelector('input[type="file"]');
         const btnPublicar = document.getElementById('btnPublicar');
         const acceptTerms = document.getElementById('acceptTerms');
-        const categoriaSelect = document.querySelector('select[name="categoria"]');
-        const condicionGroup = document.getElementById('condicion-group');
-        const alimentosInfo = document.getElementById('alimentos-info');
-        const stockLabel = document.getElementById('stock-label');
-        const stockHelp = document.getElementById('stock-help');
-
-        // IDs de categorías de alimentos (debes ajustar según tu modelo)
-        const CATEGORIAS_ALIMENTOS = ['comida']; // Ajusta según tus IDs de categoría
-
-        // Función para verificar si es categoría de alimentos
-        function esCategoriaAlimentos(categoriaId) {
-            return CATEGORIAS_ALIMENTOS.includes(categoriaId);
-        }
-
-        // Manejar cambio de categoría
-        function manejarCambioCategoria() {
-            const categoriaSeleccionada = categoriaSelect.value;
-            const esAlimento = esCategoriaAlimentos(categoriaSeleccionada);
-            
-            // Mostrar/ocultar condición
-            if (condicionGroup) {
-                condicionGroup.style.display = esAlimento ? 'none' : 'block';
-            }
-            
-            // Mostrar/ocultar información de alimentos
-            if (alimentosInfo) {
-                alimentosInfo.style.display = esAlimento ? 'block' : 'none';
-            }
-            
-            // Cambiar texto de cantidad/stock
-            if (stockLabel && stockHelp) {
-                if (esAlimento) {
-                    stockLabel.textContent = 'Cantidad *';
-                    stockHelp.textContent = 'Número de porciones/raciones disponibles';
-                } else {
-                    stockLabel.textContent = 'Cantidad Disponible *';
-                    stockHelp.textContent = 'Número de unidades disponibles';
-                }
-            }
-        }
-
-        // Inicializar estado según categoría seleccionada
-        manejarCambioCategoria();
-
-        // Event listener para cambio de categoría
-        if (categoriaSelect) {
-            categoriaSelect.addEventListener('change', manejarCambioCategoria);
-        }
 
         // Drag & Drop para imágenes
         fileUploadArea.addEventListener('dragover', function(e) {
@@ -818,18 +751,6 @@
                 alert('❌ Debes aceptar los términos y condiciones para publicar');
                 acceptTerms.focus();
                 return;
-            }
-
-            // Validación adicional para alimentos
-            const categoriaSeleccionada = categoriaSelect.value;
-            if (esCategoriaAlimentos(categoriaSeleccionada)) {
-                const descripcion = document.querySelector('textarea[name="descripcion"]').value;
-                if (!descripcion.toLowerCase().includes('fecha') && !descripcion.toLowerCase().includes('caducidad')) {
-                    if (!confirm('⚠️ Para productos alimenticios, se recomienda incluir información sobre fecha de preparación/caducidad en la descripción. ¿Deseas continuar?')) {
-                        e.preventDefault();
-                        return;
-                    }
-                }
             }
 
             // Deshabilitar botón para evitar múltiples envíos
