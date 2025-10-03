@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
+from django.db.models import Q, Sum, Count
 from .models import Producto, Categoria, Favorito, ImagenProducto
 from .forms import ProductoForm
 
@@ -177,31 +177,117 @@ def vender(request):
 
 @login_required
 def mis_productos(request):
-    """Mostrar los productos del usuario actual"""
+    """Mostrar los productos del usuario actual con filtros y estadísticas"""
     if not hasattr(request.user, 'estudiante'):
         messages.error(request, "Debes tener un perfil de estudiante para ver tus productos")
         return redirect('productos:explorar')
     
-    productos = Producto.objects.filter(vendedor=request.user.estudiante)
+    # Obtener todos los productos del usuario
+    productos = Producto.objects.filter(vendedor=request.user.estudiante).select_related(
+        'categoria'
+    ).prefetch_related('imagenes').order_by('-publicado_en')
+    
+    # Aplicar filtros
+    estado_filtro = request.GET.get('estado', '')
+    categoria_filtro = request.GET.get('categoria', '')
+    
+    productos_filtrados = productos
+    if estado_filtro and estado_filtro != 'todos':
+        productos_filtrados = productos_filtrados.filter(estado=estado_filtro)
+    
+    if categoria_filtro:
+        productos_filtrados = productos_filtrados.filter(categoria_id=categoria_filtro)
+    
+    # Organizar productos por estado para estadísticas
+    productos_activos = productos.filter(estado='disponible')
+    productos_reservados = productos.filter(estado='reservado')
+    productos_vendidos = productos.filter(estado='vendido')
+    productos_inactivos = productos.filter(estado='inactivo')
+    
+    # Estadísticas
+    total_productos = productos.count()
+    total_visitas = productos.aggregate(Sum('visitas'))['visitas__sum'] or 0
+    total_favoritos = sum(producto.cantidad_favoritos for producto in productos)
+    
+    # Categorías únicas del usuario para filtros
+    categorias_usuario = Categoria.objects.filter(
+        productos__vendedor=request.user.estudiante
+    ).distinct()
     
     context = {
-        'productos': productos,
-        'titulo': 'Mis Productos'
+        'productos': productos_filtrados,
+        'productos_activos': productos_activos,
+        'productos_reservados': productos_reservados,
+        'productos_vendidos': productos_vendidos,
+        'productos_inactivos': productos_inactivos,
+        'total_productos': total_productos,
+        'total_visitas': total_visitas,
+        'total_favoritos': total_favoritos,
+        'categorias_usuario': categorias_usuario,
+        'estado_filtro': estado_filtro,
+        'categoria_filtro': categoria_filtro,
     }
     return render(request, 'productos/mis_productos.html', context)
 
-def productos_por_categoria(request, categoria_id):
-    """Mostrar productos por categoría específica"""
-    categoria = get_object_or_404(Categoria, id=categoria_id)
-    productos = Producto.objects.filter(categoria=categoria, estado='disponible')
+@login_required
+def marcar_todos_vendidos(request):
+    """Marcar todos los productos disponibles como vendidos"""
+    if not hasattr(request.user, 'estudiante'):
+        messages.error(request, "Acceso denegado")
+        return redirect('productos:mis_productos')
+    
+    if request.method == 'POST':
+        productos_activos = Producto.objects.filter(
+            vendedor=request.user.estudiante,
+            estado='disponible'
+        )
+        
+        count = productos_activos.update(estado='vendido')
+        
+        if count > 0:
+            messages.success(request, f"✅ {count} productos marcados como vendidos")
+        else:
+            messages.info(request, "No hay productos disponibles para marcar como vendidos")
+    
+    next_url = request.POST.get('next', 'productos:mis_productos')
+    return redirect(next_url)
+
+@login_required
+def estadisticas_productos(request):
+    """Estadísticas detalladas de los productos del usuario"""
+    if not hasattr(request.user, 'estudiante'):
+        messages.error(request, "Debes tener un perfil de estudiante")
+        return redirect('productos:explorar')
+    
+    productos = Producto.objects.filter(vendedor=request.user.estudiante)
+    
+    # Estadísticas básicas
+    total_productos = productos.count()
+    productos_por_estado = productos.values('estado').annotate(total=Count('id'))
+    productos_por_categoria = productos.values('categoria__nombre').annotate(total=Count('id'))
+    
+    # Productos más populares
+    productos_populares = productos.order_by('-visitas')[:5]
+    
+    # Estadísticas de tiempo
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    ultima_semana = timezone.now() - timedelta(days=7)
+    productos_recientes = productos.filter(publicado_en__gte=ultima_semana).count()
     
     context = {
-        'productos': productos,
-        'categoria': categoria,
-        'titulo': f'Productos en {categoria.get_nombre_display()}'
+        'total_productos': total_productos,
+        'productos_por_estado': productos_por_estado,
+        'productos_por_categoria': productos_por_categoria,
+        'productos_populares': productos_populares,
+        'productos_recientes': productos_recientes,
+        'total_visitas': productos.aggregate(Sum('visitas'))['visitas__sum'] or 0,
+        'total_favoritos': sum(p.cantidad_favoritos for p in productos),
     }
-    return render(request, 'productos/explorar.html', context)
+    return render(request, 'productos/estadisticas.html', context)
 
+@login_required
 def iniciar_checkout(request, producto_id):
     """Inicia el proceso de checkout para un producto"""
     producto = get_object_or_404(Producto, id=producto_id, estado='disponible')
@@ -216,7 +302,7 @@ def iniciar_checkout(request, producto_id):
     }
     return render(request, "checkout/iniciar.html", context)
 
-### vistas faltantes
+### VISTAS ADICIONALES
 
 @login_required
 def editar_producto(request, producto_id):
@@ -247,7 +333,12 @@ def editar_producto(request, producto_id):
     else:
         form = ProductoForm(instance=producto)
     
-    return render(request, 'productos/editar.html', {'form': form, 'producto': producto})
+    context = {
+        'form': form, 
+        'producto': producto,
+        'imagenes_existentes': producto.imagenes.all()
+    }
+    return render(request, 'productos/editar.html', context)
 
 @login_required
 def eliminar_producto(request, producto_id):
@@ -265,3 +356,138 @@ def eliminar_producto(request, producto_id):
         return redirect('productos:mis_productos')
     
     return render(request, 'productos/eliminar.html', {'producto': producto})
+
+@login_required
+def cambiar_estado_producto(request, producto_id, nuevo_estado):
+    """Cambiar el estado de un producto (vender, reservar, etc.)"""
+    producto = get_object_or_404(Producto, id=producto_id)
+    
+    if producto.vendedor != request.user.estudiante:
+        messages.error(request, "No tienes permiso para modificar este producto")
+        return redirect('productos:mis_productos')
+    
+    estados_permitidos = ['disponible', 'vendido', 'reservado', 'inactivo']
+    if nuevo_estado not in estados_permitidos:
+        messages.error(request, "Estado no válido")
+        return redirect('productos:mis_productos')
+    
+    producto.estado = nuevo_estado
+    producto.save()
+    
+    mensajes_estado = {
+        'disponible': "🟢 Producto marcado como disponible",
+        'vendido': "🔴 Producto marcado como vendido", 
+        'reservado': "🟡 Producto marcado como reservado",
+        'inactivo': "⚫ Producto marcado como inactivo"
+    }
+    
+    messages.success(request, mensajes_estado.get(nuevo_estado, "Estado actualizado"))
+    
+    # Redirigir a la página anterior o a mis productos
+    next_url = request.POST.get('next', request.GET.get('next', 'productos:mis_productos'))
+    return redirect(next_url)
+
+def productos_por_categoria(request, categoria_id):
+    """Mostrar productos por categoría específica"""
+    categoria = get_object_or_404(Categoria, id=categoria_id)
+    productos = Producto.objects.filter(categoria=categoria, estado='disponible').select_related(
+        'categoria', 'vendedor'
+    ).prefetch_related('imagenes')
+    
+    context = {
+        'productos': productos,
+        'categoria': categoria,
+        'titulo': f'Productos en {categoria.get_nombre_display()}'
+    }
+    return render(request, 'productos/explorar.html', context)
+
+@login_required
+def duplicar_producto(request, producto_id):
+    """Duplicar un producto existente para crear uno nuevo basado en él"""
+    producto_original = get_object_or_404(Producto, id=producto_id)
+    
+    # Verificar que el usuario es el vendedor
+    if producto_original.vendedor != request.user.estudiante:
+        messages.error(request, "No tienes permiso para duplicar este producto")
+        return redirect('productos:mis_productos')
+    
+    # Crear una copia del producto
+    producto_nuevo = Producto(
+        nombre=f"Copia de {producto_original.nombre}",
+        descripcion=producto_original.descripcion,
+        categoria=producto_original.categoria,
+        precio=producto_original.precio,
+        condicion=producto_original.condicion,
+        estado='disponible',
+        stock=producto_original.stock,
+        es_multiple=producto_original.es_multiple,
+        tipo_envio=producto_original.tipo_envio,
+        tags=producto_original.tags,
+        vendedor=request.user.estudiante
+    )
+    producto_nuevo.save()
+    
+    # Copiar imágenes (opcional - si quieres duplicar las imágenes también)
+    # for imagen in producto_original.imagenes.all():
+    #     ImagenProducto.objects.create(
+    #         producto=producto_nuevo,
+    #         imagen=imagen.imagen,
+    #         orden=imagen.orden
+    #     )
+    
+    messages.success(request, "📋 Producto duplicado exitosamente. Ahora puedes editarlo.")
+    return redirect('productos:editar', producto_id=producto_nuevo.id)
+
+@login_required
+def activar_desactivar_producto(request, producto_id):
+    """Activar o desactivar un producto rápidamente"""
+    producto = get_object_or_404(Producto, id=producto_id)
+    
+    if producto.vendedor != request.user.estudiante:
+        messages.error(request, "No tienes permiso para modificar este producto")
+        return redirect('productos:mis_productos')
+    
+    # Cambiar entre disponible e inactivo
+    if producto.estado == 'disponible':
+        producto.estado = 'inactivo'
+        mensaje = "⚫ Producto desactivado"
+    else:
+        producto.estado = 'disponible'
+        mensaje = "🟢 Producto activado"
+    
+    producto.save()
+    messages.success(request, mensaje)
+    
+    next_url = request.POST.get('next', request.GET.get('next', 'productos:mis_productos'))
+    return redirect(next_url)
+
+@login_required
+def productos_mas_vendidos(request):
+    """Mostrar estadísticas de productos más vendidos del usuario"""
+    if not hasattr(request.user, 'estudiante'):
+        messages.error(request, "Debes tener un perfil de estudiante")
+        return redirect('productos:explorar')
+    
+    productos_vendidos = Producto.objects.filter(
+        vendedor=request.user.estudiante,
+        estado='vendido'
+    ).order_by('-publicado_en')
+    
+    total_ventas = productos_vendidos.count()
+    ingresos_totales = productos_vendidos.aggregate(Sum('precio'))['precio__sum'] or 0
+    
+    ventas_por_categoria = productos_vendidos.values(
+        'categoria__nombre'
+    ).annotate(
+        total=Count('id'),
+        ingresos=Sum('precio')
+    ).order_by('-total')
+    
+    context = {
+        'productos_vendidos': productos_vendidos,
+        'total_ventas': total_ventas,
+        'ingresos_totales': ingresos_totales,
+        'ventas_por_categoria': ventas_por_categoria,
+        'titulo': 'Mis Ventas'
+    }
+    return render(request, 'productos/ventas.html', context)
