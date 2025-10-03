@@ -266,8 +266,8 @@ def estadisticas_productos(request):
     productos_por_estado = productos.values('estado').annotate(total=Count('id'))
     productos_por_categoria = productos.values('categoria__nombre').annotate(total=Count('id'))
     
-    # Productos más populares
-    productos_populares = productos.order_by('-visitas')[:5]
+    # Productos más populares con imágenes
+    productos_populares = productos.order_by('-visitas')[:5].prefetch_related('imagenes')
     
     # Estadísticas de tiempo
     from django.utils import timezone
@@ -276,12 +276,16 @@ def estadisticas_productos(request):
     ultima_semana = timezone.now() - timedelta(days=7)
     productos_recientes = productos.filter(publicado_en__gte=ultima_semana).count()
     
+    # Productos por estado para cálculos
+    productos_activos = productos.filter(estado='disponible').count()
+    
     context = {
         'total_productos': total_productos,
         'productos_por_estado': productos_por_estado,
         'productos_por_categoria': productos_por_categoria,
         'productos_populares': productos_populares,
         'productos_recientes': productos_recientes,
+        'productos_activos': productos_activos,
         'total_visitas': productos.aggregate(Sum('visitas'))['visitas__sum'] or 0,
         'total_favoritos': sum(p.cantidad_favoritos for p in productos),
     }
