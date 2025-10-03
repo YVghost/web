@@ -18,19 +18,19 @@
         </div>
     </div>
 
-    <!-- Estadísticas MEJORADAS -->
+    <!-- Estadísticas -->
     <div class="estadisticas-rapidas">
         <div class="stat-card">
             <div class="stat-icon">❤️</div>
             <div class="stat-info">
-                <div class="stat-number" id="statTotal">{{ productos|length }}</div>
+                <div class="stat-number">{{ productos|length }}</div>
                 <div class="stat-label">Productos Favoritos</div>
             </div>
         </div>
         <div class="stat-card">
             <div class="stat-icon">🟢</div>
             <div class="stat-info">
-                <div class="stat-number" id="statDisponibles">{{ productos_disponibles|default:0 }}</div>
+                <div class="stat-number">{{ productos_disponibles|default:0 }}</div>
                 <div class="stat-label">Disponibles</div>
             </div>
         </div>
@@ -50,57 +50,66 @@
         </div>
     </div>
 
-    <!-- Filtros MEJORADOS -->
+    <!-- Filtros SIMPLIFICADOS -->
     <div class="filtros-container">
         <div class="filtros-header">
             <h3>🔧 Filtrar Favoritos</h3>
-            <span class="filtros-count" id="filtrosCount">{{ productos|length }} productos</span>
+            <span class="filtros-count">{{ productos|length }} productos</span>
         </div>
         
         <!-- Filtros por estado -->
         <div class="filtros-botones">
-            <button class="filtro-btn active" data-filtro="todos">Todos</button>
-            <button class="filtro-btn" data-filtro="disponible">🟢 Disponibles</button>
-            <button class="filtro-btn" data-filtro="reservado">🟡 Reservados</button>
-            <button class="filtro-btn" data-filtro="vendido">🔴 Vendidos</button>
-            <button class="filtro-btn" data-filtro="nuevo">🆕 Recientes</button>
+            <a href="?filtro=todos" class="filtro-btn {% if filtro_activo == 'todos' or not filtro_activo %}active{% endif %}">Todos</a>
+            <a href="?filtro=disponible" class="filtro-btn {% if filtro_activo == 'disponible' %}active{% endif %}">🟢 Disponibles</a>
+            <a href="?filtro=reservado" class="filtro-btn {% if filtro_activo == 'reservado' %}active{% endif %}">🟡 Reservados</a>
+            <a href="?filtro=vendido" class="filtro-btn {% if filtro_activo == 'vendido' %}active{% endif %}">🔴 Vendidos</a>
+            <a href="?filtro=nuevo" class="filtro-btn {% if filtro_activo == 'nuevo' %}active{% endif %}">🆕 Recientes</a>
         </div>
         
         <!-- Filtro por categoría -->
         <div class="filtro-categorias">
-            <select class="categoria-select" id="filtroCategoria">
-                <option value="">Todas las categorías</option>
-                {% for categoria in categorias_favoritos %}
-                <option value="{{ categoria.nombre }}">{{ categoria.get_nombre_display }}</option>
-                {% endfor %}
-            </select>
+            <form method="GET" class="filtro-form">
+                <select name="categoria" class="categoria-select" onchange="this.form.submit()">
+                    <option value="">Todas las categorías</option>
+                    {% for categoria in categorias_favoritos %}
+                    <option value="{{ categoria.nombre }}" {% if categoria_filtro == categoria.nombre %}selected{% endif %}>
+                        {{ categoria.get_nombre_display }}
+                    </option>
+                    {% endfor %}
+                </select>
+                {% if filtro_activo %}
+                <input type="hidden" name="filtro" value="{{ filtro_activo }}">
+                {% endif %}
+            </form>
         </div>
     </div>
 
     <!-- Contador de resultados -->
-    <div class="resultados-info" id="resultadosInfo">
-        Mostrando <span id="productosMostrados">{{ productos|length }}</span> de {{ productos|length }} productos
+    <div class="resultados-info">
+        Mostrando {{ productos|length }} de {{ total_productos }} productos
+        {% if filtro_activo or categoria_filtro %}
+        <a href="{% url 'productos:mis_favoritos' %}" class="clear-filters">🗑️ Limpiar filtros</a>
+        {% endif %}
     </div>
 
-    <!-- Grid de productos favoritos MEJORADO -->
+    <!-- Grid de productos favoritos -->
     {% if productos %}
-    <div class="favoritos-grid" id="favoritosGrid">
+    <div class="favoritos-grid">
         {% for producto in productos %}
-        <div class="favorito-card" 
-             data-categoria="{{ producto.categoria.nombre }}" 
-             data-estado="{{ producto.estado }}"
-             data-precio="{{ producto.precio }}"
-             data-nuevo="{{ producto.es_nuevo|yesno:'true,false' }}"
-             data-producto-id="{{ producto.id }}">
+        <div class="favorito-card">
             <div class="favorito-header">
                 <div class="estado-badge {{ producto.estado }}" title="Estado del producto">
                     {{ producto.get_estado_display }}
                 </div>
-                <button class="btn-quitar-favorito" 
-                        data-producto-id="{{ producto.id }}" 
-                        title="Quitar de favoritos">
-                    ❌
-                </button>
+                
+                <!-- Botón para quitar de favoritos - USANDO DJANGO -->
+                <form method="POST" action="{% url 'productos:toggle_favorito' producto.id %}" class="favorito-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{% url 'productos:mis_favoritos' %}">
+                    <button type="submit" class="btn-quitar-favorito" title="Quitar de favoritos" onclick="return confirm('¿Estás seguro de que quieres quitar este producto de tus favoritos?')">
+                        ❌
+                    </button>
+                </form>
             </div>
 
             <div class="favorito-image">
@@ -129,20 +138,15 @@
                     {% endif %}
                 </div>
 
-                <!-- Overlay de acciones rápidas MEJORADO -->
+                <!-- Overlay de acciones rápidas - SIN CONTACTAR -->
                 <div class="favorito-overlay">
                     <div class="overlay-actions">
                         <a href="{% url 'productos:detalle' producto.id %}" class="btn-overlay btn-ver-detalles">
                             👁️ Ver Detalles
                         </a>
-                        {% if producto.estado == 'disponible' %}
-                        <button class="btn-overlay btn-contactar" data-producto-id="{{ producto.id }}">
-                            📞 Contactar
-                        </button>
-                        {% endif %}
-                        <button class="btn-overlay btn-compartir" data-producto-id="{{ producto.id }}">
+                        <a href="#" class="btn-overlay btn-compartir" onclick="compartirProducto({{ producto.id }})">
                             📤 Compartir
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -187,11 +191,7 @@
                 <a href="{% url 'productos:detalle' producto.id %}" class="btn btn-primary">
                     👀 Ver Producto
                 </a>
-                {% if producto.estado == 'disponible' %}
-                <button class="btn btn-secondary btn-contactar-vendedor" data-producto-id="{{ producto.id }}">
-                    📞 Contactar
-                </button>
-                {% else %}
+                {% if producto.estado != 'disponible' %}
                 <div class="no-disponible-msg">
                     {% if producto.estado == 'vendido' %}
                     ❌ Vendido
@@ -207,7 +207,7 @@
         {% endfor %}
     </div>
     {% else %}
-    <!-- Estado vacío MEJORADO -->
+    <!-- Estado vacío -->
     <div class="empty-state">
         <div class="empty-icon">❤️</div>
         <h3>No tienes productos favoritos</h3>
@@ -225,22 +225,22 @@
         <div class="sugerencias-populares">
             <h4>💡 Categorías populares:</h4>
             <div class="categorias-populares">
-                <div class="categoria-sugerida">
+                <a href="{% url 'productos:por_categoria' 1 %}" class="categoria-sugerida">
                     <span>📚</span>
                     <span>Libros de texto</span>
-                </div>
-                <div class="categoria-sugerida">
+                </a>
+                <a href="{% url 'productos:por_categoria' 3 %}" class="categoria-sugerida">
                     <span>💻</span>
                     <span>Electrónica</span>
-                </div>
-                <div class="categoria-sugerida">
+                </a>
+                <a href="{% url 'productos:por_categoria' 2 %}" class="categoria-sugerida">
                     <span>📝</span>
                     <span>Apuntes</span>
-                </div>
-                <div class="categoria-sugerida">
+                </a>
+                <a href="{% url 'productos:por_categoria' 4 %}" class="categoria-sugerida">
                     <span>🔬</span>
                     <span>Instrumentos Lab</span>
-                </div>
+                </a>
             </div>
         </div>
     </div>
@@ -259,9 +259,6 @@
     </div>
     {% endif %}
 </div>
-
-<!-- Toast Container para mensajes -->
-<div id="toastContainer" class="toast-container"></div>
 {% endblock %}
 
 {% block extra_css %}
@@ -375,7 +372,7 @@
         margin-top: 5px;
     }
 
-    /* Filtros MEJORADOS */
+    /* Filtros SIMPLIFICADOS */
     .filtros-container {
         background: rgba(30, 30, 30, 0.8);
         padding: 20px;
@@ -420,6 +417,8 @@
         cursor: pointer;
         transition: all 0.3s;
         font-size: 14px;
+        text-decoration: none;
+        display: inline-block;
     }
 
     .filtro-btn.active,
@@ -427,9 +426,16 @@
         background: #e91e63;
         color: white;
         border-color: #e91e63;
+        text-decoration: none;
     }
 
     .filtro-categorias {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .filtro-form {
         display: flex;
         gap: 10px;
         align-items: center;
@@ -450,6 +456,16 @@
         color: #888;
         margin-bottom: 20px;
         font-size: 14px;
+    }
+
+    .clear-filters {
+        color: #e91e63;
+        text-decoration: none;
+        margin-left: 10px;
+    }
+
+    .clear-filters:hover {
+        text-decoration: underline;
     }
 
     /* Grid de favoritos */
@@ -509,6 +525,11 @@
     .estado-badge.vendido {
         background: #f44336;
         color: white;
+    }
+
+    .favorito-form {
+        margin: 0;
+        padding: 0;
     }
 
     .btn-quitar-favorito {
@@ -592,7 +613,7 @@
         color: white;
     }
 
-    /* Overlay de acciones MEJORADO */
+    /* Overlay de acciones - SIN CONTACTAR */
     .favorito-overlay {
         position: absolute;
         top: 0;
@@ -724,15 +745,6 @@
         gap: 10px;
     }
 
-    .btn-contactar-vendedor {
-        background: #2196F3;
-        color: white;
-    }
-
-    .btn-contactar-vendedor:hover {
-        background: #1976D2;
-    }
-
     .no-disponible-msg {
         text-align: center;
         color: #f44336;
@@ -743,7 +755,7 @@
         border-radius: 6px;
     }
 
-    /* Empty state MEJORADO */
+    /* Empty state */
     .empty-state {
         text-align: center;
         padding: 80px 20px;
@@ -807,70 +819,18 @@
         color: #ccc;
         transition: all 0.3s;
         cursor: pointer;
+        text-decoration: none;
     }
 
     .categoria-sugerida:hover {
         background: rgba(76, 175, 80, 0.2);
         color: #fff;
         transform: translateY(-2px);
+        text-decoration: none;
     }
 
     .categoria-sugerida span:first-child {
         font-size: 20px;
-    }
-
-    /* Toast Container */
-    .toast-container {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 10000;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .toast {
-        padding: 12px 20px;
-        border-radius: 6px;
-        color: white;
-        font-weight: 500;
-        animation: slideInRight 0.3s ease;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-
-    .toast.success {
-        background: #4CAF50;
-    }
-
-    .toast.error {
-        background: #f44336;
-    }
-
-    .toast.info {
-        background: #2196F3;
-    }
-
-    @keyframes slideInRight {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-
-    @keyframes slideOutRight {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(100%);
-            opacity: 0;
-        }
     }
 
     /* Sugerencias */
@@ -983,118 +943,8 @@
 
 {% block extra_js %}
 <script>
+// Solo mantener la funcionalidad de compartir y efectos visuales
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar todas las funcionalidades
-    inicializarFiltros();
-    inicializarEventos();
-    inicializarTooltips();
-});
-
-function inicializarFiltros() {
-    const filtroBtns = document.querySelectorAll('.filtro-btn');
-    const categoriaSelect = document.getElementById('filtroCategoria');
-    const favoritoCards = document.querySelectorAll('.favorito-card');
-    const productosMostrados = document.getElementById('productosMostrados');
-    const resultadosInfo = document.getElementById('resultadosInfo');
-    const statTotal = document.getElementById('statTotal');
-    const statDisponibles = document.getElementById('statDisponibles');
-    const filtrosCount = document.getElementById('filtrosCount');
-
-    function aplicarFiltros() {
-        let visibleCount = 0;
-        let disponiblesCount = 0;
-        const filtroActivo = document.querySelector('.filtro-btn.active')?.getAttribute('data-filtro') || 'todos';
-        const categoriaSeleccionada = categoriaSelect?.value || '';
-        
-        favoritoCards.forEach(card => {
-            const estado = card.getAttribute('data-estado');
-            const categoria = card.getAttribute('data-categoria');
-            const esNuevo = card.getAttribute('data-nuevo') === 'true';
-            
-            let mostrar = true;
-            
-            // Aplicar filtro de estado
-            if (filtroActivo !== 'todos') {
-                if (filtroActivo === 'disponible' && estado !== 'disponible') mostrar = false;
-                else if (filtroActivo === 'reservado' && estado !== 'reservado') mostrar = false;
-                else if (filtroActivo === 'vendido' && estado !== 'vendido') mostrar = false;
-                else if (filtroActivo === 'nuevo' && !esNuevo) mostrar = false;
-            }
-            
-            // Aplicar filtro de categoría
-            if (categoriaSeleccionada && categoria !== categoriaSeleccionada) {
-                mostrar = false;
-            }
-            
-            if (mostrar) {
-                card.style.display = 'block';
-                visibleCount++;
-                if (estado === 'disponible') disponiblesCount++;
-                
-                // Animación de aparición
-                card.style.animation = 'none';
-                setTimeout(() => {
-                    card.style.animation = 'fadeIn 0.5s ease';
-                }, 10);
-            } else {
-                card.style.display = 'none';
-            }
-        });
-        
-        // Actualizar contadores
-        if (productosMostrados) productosMostrados.textContent = visibleCount;
-        if (resultadosInfo) resultadosInfo.style.display = visibleCount === 0 ? 'none' : 'block';
-        if (filtrosCount) filtrosCount.textContent = `${visibleCount} productos`;
-        
-        // Mostrar mensaje si no hay resultados
-        if (visibleCount === 0) {
-            mostrarMensaje('No se encontraron productos con los filtros aplicados', 'info');
-        }
-    }
-    
-    // Eventos de filtros
-    filtroBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            filtroBtns.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            aplicarFiltros();
-        });
-    });
-    
-    if (categoriaSelect) {
-        categoriaSelect.addEventListener('change', aplicarFiltros);
-    }
-    
-    // Aplicar filtros iniciales
-    aplicarFiltros();
-}
-
-function inicializarEventos() {
-    // Quitar de favoritos con AJAX
-    document.querySelectorAll('.btn-quitar-favorito').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const productoId = this.getAttribute('data-producto-id');
-            quitarFavorito(productoId, this);
-        });
-    });
-
-    // Contactar vendedor
-    document.querySelectorAll('.btn-contactar, .btn-contactar-vendedor').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const productoId = this.getAttribute('data-producto-id');
-            contactarVendedor(productoId);
-        });
-    });
-
-    // Compartir producto
-    document.querySelectorAll('.btn-compartir').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const productoId = this.getAttribute('data-producto-id');
-            compartirProducto(productoId);
-        });
-    });
-
     // Efectos hover mejorados
     document.querySelectorAll('.favorito-card').forEach(card => {
         card.addEventListener('mouseenter', function() {
@@ -1105,65 +955,7 @@ function inicializarEventos() {
             this.style.transform = 'translateY(0)';
         });
     });
-}
-
-function inicializarTooltips() {
-    // Los tooltips nativos del navegador se activan con el atributo 'title'
-    // Podemos mejorar esto con un tooltip personalizado si es necesario
-    const elementsWithTooltip = document.querySelectorAll('[title]');
-    elementsWithTooltip.forEach(el => {
-        el.addEventListener('mouseenter', function(e) {
-            // Tooltip personalizado podría implementarse aquí
-        });
-    });
-}
-
-async function quitarFavorito(productoId, boton) {
-    if (!confirm('¿Estás seguro de que quieres quitar este producto de tus favoritos?')) {
-        return;
-    }
-    
-    const card = boton.closest('.favorito-card');
-    
-    try {
-        // Animación de desaparición
-        card.style.opacity = '0.5';
-        card.style.transform = 'scale(0.95)';
-        
-        const response = await fetch(`/productos/${productoId}/favorito/`, {
-            method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': getCookie('csrftoken')
-            }
-        });
-        
-        if (response.ok) {
-            // Animación de eliminación
-            card.style.transition = 'all 0.5s ease';
-            card.style.opacity = '0';
-            card.style.transform = 'translateX(100%)';
-            
-            setTimeout(() => {
-                card.remove();
-                actualizarEstadisticas();
-                mostrarMensaje('Producto removido de favoritos', 'success');
-                aplicarFiltros(); // Re-aplicar filtros después de eliminar
-            }, 500);
-        } else {
-            throw new Error('Error al quitar de favoritos');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        card.style.opacity = '1';
-        card.style.transform = 'scale(1)';
-        mostrarMensaje('Error al quitar de favoritos', 'error');
-    }
-}
-
-function contactarVendedor(productoId) {
-    mostrarMensaje('📞 Función de contacto próximamente disponible', 'info');
-}
+});
 
 function compartirProducto(productoId) {
     const url = `${window.location.origin}/productos/${productoId}/`;
@@ -1173,82 +965,16 @@ function compartirProducto(productoId) {
             title: 'Mira este producto en MarketU',
             text: 'Encontré este producto interesante en MarketU',
             url: url
-        }).then(() => {
-            mostrarMensaje('Producto compartido', 'success');
-        }).catch(() => {
-            // El usuario canceló el share
         });
     } else {
         // Fallback para navegadores que no soportan Web Share API
         navigator.clipboard.writeText(url).then(() => {
-            mostrarMensaje('🔗 Enlace copiado al portapapeles', 'success');
+            alert('🔗 Enlace copiado al portapapeles');
         }).catch(() => {
             // Fallback más básico
             prompt('Comparte este enlace:', url);
         });
     }
 }
-
-function actualizarEstadisticas() {
-    const cards = document.querySelectorAll('.favorito-card');
-    const total = cards.length;
-    const disponibles = Array.from(cards).filter(card => 
-        card.getAttribute('data-estado') === 'disponible'
-    ).length;
-    
-    // Actualizar estadísticas en tiempo real
-    const statTotal = document.getElementById('statTotal');
-    const statDisponibles = document.getElementById('statDisponibles');
-    
-    if (statTotal) statTotal.textContent = total;
-    if (statDisponibles) statDisponibles.textContent = disponibles;
-}
-
-function mostrarMensaje(mensaje, tipo = 'info') {
-    const toastContainer = document.getElementById('toastContainer');
-    if (!toastContainer) return;
-    
-    const toast = document.createElement('div');
-    toast.className = `toast ${tipo}`;
-    toast.textContent = mensaje;
-    
-    toastContainer.appendChild(toast);
-    
-    // Auto-eliminar después de 3 segundos
-    setTimeout(() => {
-        toast.style.animation = 'slideOutRight 0.3s ease';
-        setTimeout(() => {
-            if (toast.parentNode) {
-                toast.parentNode.removeChild(toast);
-            }
-        }, 300);
-    }, 3000);
-}
-
-// Helper function para CSRF token
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
-// Añadir animación CSS para fadeIn
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-`;
-document.head.appendChild(style);
 </script>
 {% endblock %}

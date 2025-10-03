@@ -90,7 +90,7 @@ def toggle_favorito(request, producto_id):
 
 @login_required
 def mis_favoritos(request):
-    """Mostrar todos los productos favoritos del usuario con estadísticas"""
+    """Mostrar todos los productos favoritos del usuario con estadísticas y filtros"""
     if not hasattr(request.user, 'estudiante'):
         messages.error(request, "Debes tener un perfil de estudiante para ver favoritos")
         return redirect('productos:explorar')
@@ -99,22 +99,48 @@ def mis_favoritos(request):
         'producto', 'producto__categoria', 'producto__vendedor'
     ).prefetch_related('producto__imagenes')
     
-    productos = [favorito.producto for favorito in favoritos]
+    # Aplicar filtros
+    filtro_activo = request.GET.get('filtro', '')
+    categoria_filtro = request.GET.get('categoria', '')
     
-    # Estadísticas MEJORADAS
-    productos_disponibles = len([p for p in productos if p.estado == 'disponible'])
-    precio_total = sum(p.precio for p in productos if p.estado == 'disponible')
-    universidades_unicas = len(set(p.vendedor.universidad for p in productos if p.vendedor.universidad))
+    productos_favoritos = []
+    for favorito in favoritos:
+        producto = favorito.producto
+        # Aplicar filtro de estado
+        if filtro_activo:
+            if filtro_activo == 'disponible' and producto.estado != 'disponible':
+                continue
+            elif filtro_activo == 'reservado' and producto.estado != 'reservado':
+                continue
+            elif filtro_activo == 'vendido' and producto.estado != 'vendido':
+                continue
+            elif filtro_activo == 'nuevo' and not producto.es_nuevo:
+                continue
+        
+        # Aplicar filtro de categoría
+        if categoria_filtro and producto.categoria and producto.categoria.nombre != categoria_filtro:
+            continue
+            
+        productos_favoritos.append(producto)
+    
+    # Estadísticas (sobre todos los favoritos, no solo los filtrados)
+    todos_productos = [f.producto for f in favoritos]
+    productos_disponibles = len([p for p in todos_productos if p.estado == 'disponible'])
+    precio_total = sum(p.precio for p in todos_productos if p.estado == 'disponible')
+    universidades_unicas = len(set(p.vendedor.universidad for p in todos_productos if p.vendedor.universidad))
     
     # Categorías únicas para filtros
-    categorias_favoritos = set(producto.categoria for producto in productos if producto.categoria)
+    categorias_favoritos = set(producto.categoria for producto in todos_productos if producto.categoria)
     
     context = {
-        'productos': productos,
+        'productos': productos_favoritos,
         'productos_disponibles': productos_disponibles,
         'precio_total': precio_total,
         'universidades_unicas': universidades_unicas,
         'categorias_favoritos': categorias_favoritos,
+        'filtro_activo': filtro_activo,
+        'categoria_filtro': categoria_filtro,
+        'total_productos': len(todos_productos),
         'titulo': 'Mis Favoritos'
     }
     return render(request, 'productos/mis_favoritos.html', context)
