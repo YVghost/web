@@ -1,0 +1,803 @@
+{% extends 'base.html' %}
+
+{% block title %}Vender Producto - MarketU{% endblock %}
+
+{% block content %}
+<div class="vender-container">
+    <div class="vender-header">
+        <h1>🎉 Vender Producto</h1>
+        <p class="subtitle">Publica tu producto y comienza a vender en MarketU</p>
+    </div>
+
+    <div class="vender-form-container">
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        {% if form.errors %}
+        <div class="alert alert-error">
+            <h4>❌ Por favor corrige los siguientes errores:</h4>
+            {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                    <p><strong>{{ field|title }}:</strong> {{ error }}</p>
+                {% endfor %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="POST" enctype="multipart/form-data" class="vender-form" id="productoForm">
+            {% csrf_token %}
+            
+            <!-- Información Básica -->
+            <div class="form-section">
+                <h2>📝 Información Básica</h2>
+                
+                <div class="form-group">
+                    <label for="{{ form.nombre.id_for_label }}">Nombre del Producto *</label>
+                    {{ form.nombre }}
+                    <small class="help-text">Un título claro y descriptivo para tu producto</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.descripcion.id_for_label }}">Descripción Detallada *</label>
+                    {{ form.descripcion }}
+                    <div class="descripcion-tips">
+                        <strong>💡 Tips para una buena descripción:</strong>
+                        <ul>
+                            <li>Incluye características principales</li>
+                            <li>Menciona el estado real del producto</li>
+                            <li>Destaca qué lo hace especial</li>
+                            <li>Sé honesto sobre cualquier defecto</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.categoria.id_for_label }}">Categoría *</label>
+                        {{ form.categoria }}
+                    </div>
+                    
+                    <div class="form-group" id="condicion-group">
+                        <label for="{{ form.condicion.id_for_label }}">Condición *</label>
+                        {{ form.condicion }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Precio y Stock -->
+            <div class="form-section">
+                <h2>💰 Precio y Cantidad</h2>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.precio.id_for_label }}">Precio ($) *</label>
+                        {{ form.precio }}
+                        <small class="help-text">Precio en dólares americanos</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.stock.id_for_label }}">Cantidad Disponible *</label>
+                        {{ form.stock }}
+                        <small class="help-text">Número de unidades disponibles</small>
+                    </div>
+                </div>
+
+                <div class="form-group checkbox-group">
+                    {{ form.es_multiple }}
+                    <label for="{{ form.es_multiple.id_for_label }}">
+                        Tengo múltiples unidades de este producto
+                    </label>
+                    <small class="help-text">Marca esta opción si tienes más de una unidad idéntica para vender</small>
+                </div>
+            </div>
+
+            <!-- Entrega -->
+            <div class="form-section">
+                <h2>🚚 Entrega</h2>
+                
+                <div class="form-group">
+                    <label for="{{ form.tipo_envio.id_for_label }}">Método de Entrega *</label>
+                    {{ form.tipo_envio }}
+                    <div class="envio-info">
+                        <p><strong>📍 Tu ubicación:</strong> {{ user.estudiante.get_universidad_display }}</p>
+                        <small class="help-text">Selecciona cómo prefieres entregar el producto</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Imágenes -->
+            <div class="form-section">
+                <h2>🖼️ Imágenes del Producto</h2>
+                
+                <div class="form-group">
+                    <label for="{{ form.imagenes.id_for_label }}">Seleccionar Imágenes</label>
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <div class="upload-placeholder">
+                            <span class="upload-icon">📁</span>
+                            <p>Arrastra y suelta imágenes aquí o haz clic para seleccionar</p>
+                            <small>Máximo 5 imágenes • Formatos: JPG, PNG, WEBP</small>
+                        </div>
+                        {{ form.imagenes }}
+                    </div>
+                    <small class="help-text">Selecciona hasta 5 imágenes de tu producto</small>
+                    
+                    <div class="image-preview" id="imagePreview">
+                        <!-- Las previsualizaciones se agregarán aquí -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Etiquetas -->
+            <div class="form-section">
+                <h2>🏷️ Etiquetas</h2>
+                
+                <div class="form-group">
+                    <label for="{{ form.tags.id_for_label }}">Palabras Clave</label>
+                    {{ form.tags }}
+                    <small class="help-text">Separa las etiquetas con comas</small>
+                    <div class="tags-examples">
+                        <strong>Ejemplos:</strong> 
+                        <span class="tag-example">libro ingenieria</span>
+                        <span class="tag-example">calculadora cientifica</span>
+                        <span class="tag-example">laptop usada</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Términos y Publicar -->
+            <div class="form-section">
+                <div class="terms-agreement">
+                    <input type="checkbox" id="acceptTerms" required>
+                    <label for="acceptTerms">
+                        Acepto los <a href="#" class="link">Términos de Venta</a> y confirmo que este producto 
+                        cumple con las <a href="#" class="link">Políticas de MarketU</a>
+                    </label>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-publicar" id="btnPublicar">
+                        🚀 Publicar Producto
+                    </button>
+                    <a href="{% url 'productos:explorar' %}" class="btn-cancelar">
+                        Cancelar
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Guía rápida -->
+    <div class="guia-rapida">
+        <h3>💡 Consejos para una buena publicación</h3>
+        <div class="consejos-grid">
+            <div class="consejo">
+                <span class="consejo-icon">📸</span>
+                <h4>Buenas Fotos</h4>
+                <p>Usa buena iluminación y muestra el producto desde diferentes ángulos</p>
+            </div>
+            <div class="consejo">
+                <span class="consejo-icon">📝</span>
+                <h4>Descripción Clara</h4>
+                <p>Sé específico sobre el estado, características y cualquier detalle importante</p>
+            </div>
+            <div class="consejo">
+                <span class="consejo-icon">💰</span>
+                <h4>Precio Justo</h4>
+                <p>Investiga precios similares y establece un precio competitivo</p>
+            </div>
+            <div class="consejo">
+                <span class="consejo-icon">⏰</span>
+                <h4>Respuesta Rápida</h4>
+                <p>Responde pronto a los interesados para aumentar tus ventas</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .vender-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .vender-header {
+        text-align: center;
+        margin-bottom: 40px;
+        padding: 30px;
+        background: rgba(30, 30, 30, 0.8);
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .vender-header h1 {
+        color: #fff;
+        font-size: 36px;
+        margin-bottom: 10px;
+    }
+
+    .subtitle {
+        color: #ccc;
+        font-size: 18px;
+    }
+
+    .vender-form-container {
+        background: rgba(30, 30, 30, 0.8);
+        border-radius: 15px;
+        padding: 40px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 40px;
+    }
+
+    .alert {
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+        font-size: 14px;
+    }
+
+    .alert-error {
+        background: rgba(244, 67, 54, 0.1);
+        border: 1px solid rgba(244, 67, 54, 0.3);
+        color: #f44336;
+    }
+
+    .alert-success {
+        background: rgba(76, 175, 80, 0.1);
+        border: 1px solid rgba(76, 175, 80, 0.3);
+        color: #4CAF50;
+    }
+
+    .alert-info {
+        background: rgba(33, 150, 243, 0.1);
+        border: 1px solid rgba(33, 150, 243, 0.3);
+        color: #2196F3;
+    }
+
+    .form-section {
+        margin-bottom: 40px;
+        padding-bottom: 30px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .form-section:last-of-type {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+
+    .form-section h2 {
+        color: #fff;
+        margin-bottom: 20px;
+        font-size: 20px;
+        border-left: 4px solid #4CAF50;
+        padding-left: 15px;
+    }
+
+    .form-group {
+        margin-bottom: 25px;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 20px;
+    }
+
+    .form-row .form-group {
+        flex: 1;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #fff;
+        font-weight: 600;
+        font-size: 16px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #444;
+        border-radius: 8px;
+        background: rgba(40, 40, 40, 0.8);
+        color: #fff;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        font-family: inherit;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+    }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 120px;
+    }
+
+    select.form-control {
+        cursor: pointer;
+    }
+
+    .help-text {
+        display: block;
+        margin-top: 6px;
+        color: #888;
+        font-size: 13px;
+        line-height: 1.4;
+    }
+
+    .descripcion-tips {
+        margin-top: 10px;
+        padding: 15px;
+        background: rgba(40, 40, 40, 0.6);
+        border-radius: 6px;
+        border-left: 3px solid #2196F3;
+    }
+
+    .descripcion-tips strong {
+        color: #2196F3;
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    .descripcion-tips ul {
+        margin: 0;
+        padding-left: 20px;
+        color: #ccc;
+    }
+
+    .descripcion-tips li {
+        margin-bottom: 4px;
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+        width: auto;
+        margin-top: 5px;
+    }
+
+    .checkbox-group label {
+        margin-bottom: 0;
+        font-weight: normal;
+    }
+
+    .envio-info {
+        margin-top: 10px;
+        padding: 12px;
+        background: rgba(40, 40, 40, 0.6);
+        border-radius: 6px;
+        border-left: 3px solid #4CAF50;
+    }
+
+    .envio-info p {
+        margin: 0 0 5px 0;
+        color: #4CAF50;
+        font-weight: 500;
+    }
+
+    /* Upload de archivos */
+    .file-upload-area {
+        border: 2px dashed #666;
+        border-radius: 8px;
+        padding: 30px;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .file-upload-area:hover {
+        border-color: #4CAF50;
+        background: rgba(76, 175, 80, 0.05);
+    }
+
+    .file-upload-area.dragover {
+        border-color: #4CAF50;
+        background: rgba(76, 175, 80, 0.1);
+    }
+
+    .upload-placeholder {
+        pointer-events: none;
+    }
+
+    .upload-icon {
+        font-size: 40px;
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    .file-upload-area input[type="file"] {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    /* Previsualización de imágenes */
+    .image-preview {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .preview-item {
+        position: relative;
+        width: 100px;
+        height: 100px;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 2px solid #444;
+    }
+
+    .preview-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .preview-remove {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: rgba(244, 67, 54, 0.9);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Etiquetas */
+    .tags-examples {
+        margin-top: 10px;
+    }
+
+    .tag-example {
+        display: inline-block;
+        background: rgba(76, 175, 80, 0.2);
+        color: #4CAF50;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        margin: 0 5px 5px 0;
+        border: 1px solid rgba(76, 175, 80, 0.3);
+    }
+
+    /* Términos y acciones */
+    .terms-agreement {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 25px;
+        padding: 15px;
+        background: rgba(40, 40, 40, 0.6);
+        border-radius: 8px;
+    }
+
+    .terms-agreement input[type="checkbox"] {
+        width: auto;
+        margin-top: 3px;
+    }
+
+    .terms-agreement label {
+        margin-bottom: 0;
+        font-weight: normal;
+        color: #ccc;
+        line-height: 1.4;
+    }
+
+    .link {
+        color: #4CAF50;
+        text-decoration: none;
+    }
+
+    .link:hover {
+        text-decoration: underline;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+
+    .btn-publicar {
+        flex: 2;
+        padding: 16px 30px;
+        background: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 18px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-publicar:hover {
+        background: #45a049;
+        transform: translateY(-2px);
+    }
+
+    .btn-publicar:disabled {
+        background: #666;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-cancelar {
+        flex: 1;
+        padding: 16px 30px;
+        background: transparent;
+        color: #ccc;
+        border: 2px solid #666;
+        border-radius: 8px;
+        text-decoration: none;
+        text-align: center;
+        font-size: 16px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-cancelar:hover {
+        border-color: #888;
+        color: #fff;
+        text-decoration: none;
+    }
+
+    /* Guía rápida */
+    .guia-rapida {
+        background: rgba(30, 30, 30, 0.8);
+        border-radius: 15px;
+        padding: 30px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .guia-rapida h3 {
+        color: #fff;
+        margin-bottom: 25px;
+        text-align: center;
+        font-size: 24px;
+    }
+
+    .consejos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+
+    .consejo {
+        text-align: center;
+        padding: 20px;
+        background: rgba(40, 40, 40, 0.6);
+        border-radius: 10px;
+        transition: transform 0.3s;
+    }
+
+    .consejo:hover {
+        transform: translateY(-5px);
+    }
+
+    .consejo-icon {
+        font-size: 32px;
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    .consejo h4 {
+        color: #fff;
+        margin: 0 0 10px 0;
+        font-size: 16px;
+    }
+
+    .consejo p {
+        color: #ccc;
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .vender-container {
+            padding: 15px;
+        }
+
+        .vender-form-container {
+            padding: 25px;
+        }
+
+        .form-row {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .consejos-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .vender-header h1 {
+            font-size: 28px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .vender-form-container {
+            padding: 20px;
+        }
+
+        .file-upload-area {
+            padding: 20px;
+        }
+
+        .btn-publicar, .btn-cancelar {
+            padding: 14px 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('productoForm');
+        const fileUploadArea = document.getElementById('fileUploadArea');
+        const imagePreview = document.getElementById('imagePreview');
+        const fileInput = document.querySelector('input[type="file"]');
+        const btnPublicar = document.getElementById('btnPublicar');
+        const acceptTerms = document.getElementById('acceptTerms');
+
+        // Drag & Drop para imágenes
+        fileUploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+
+        fileUploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+        });
+
+        fileUploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
+
+        // Cambio en el input de archivos
+        fileInput.addEventListener('change', function(e) {
+            handleFiles(this.files);
+        });
+
+        // Manejar archivos seleccionados
+        function handleFiles(files) {
+            if (files.length > 5) {
+                alert('❌ No puedes subir más de 5 imágenes');
+                return;
+            }
+
+            // Limpiar previsualizaciones anteriores
+            imagePreview.innerHTML = '';
+
+            Array.from(files).forEach((file, index) => {
+                if (index >= 5) return; // Máximo 5 imágenes
+
+                if (!file.type.startsWith('image/')) {
+                    alert('❌ Solo se permiten archivos de imagen');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'preview-item';
+                    previewItem.innerHTML = `
+                        <img src="${e.target.result}" alt="Previsualización">
+                        <button type="button" class="preview-remove" data-index="${index}">×</button>
+                    `;
+                    imagePreview.appendChild(previewItem);
+
+                    // Evento para eliminar previsualización
+                    previewItem.querySelector('.preview-remove').addEventListener('click', function() {
+                        previewItem.remove();
+                        updateFileInput();
+                    });
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Actualizar input file
+        function updateFileInput() {
+            console.log('Actualizar lista de archivos seleccionados');
+        }
+
+        // Validación del formulario
+        form.addEventListener('submit', function(e) {
+            if (!acceptTerms.checked) {
+                e.preventDefault();
+                alert('❌ Debes aceptar los términos y condiciones para publicar');
+                acceptTerms.focus();
+                return;
+            }
+
+            // Deshabilitar botón para evitar múltiples envíos
+            btnPublicar.disabled = true;
+            btnPublicar.textContent = '📤 Publicando...';
+        });
+
+        // Contador de caracteres para descripción
+        const descripcionTextarea = document.querySelector('textarea[name="descripcion"]');
+        if (descripcionTextarea) {
+            const contador = document.createElement('div');
+            contador.className = 'contador-caracteres';
+            contador.style.marginTop = '8px';
+            contador.style.fontSize = '12px';
+            contador.style.color = '#888';
+            contador.style.textAlign = 'right';
+            
+            descripcionTextarea.parentNode.appendChild(contador);
+            
+            function actualizarContador() {
+                const longitud = descripcionTextarea.value.length;
+                contador.textContent = `${longitud} caracteres`;
+                
+                if (longitud < 50) {
+                    contador.style.color = '#f44336';
+                } else if (longitud < 100) {
+                    contador.style.color = '#ff9800';
+                } else {
+                    contador.style.color = '#4CAF50';
+                }
+            }
+            
+            descripcionTextarea.addEventListener('input', actualizarContador);
+            actualizarContador(); // Inicializar
+        }
+
+        // Efectos visuales en los campos
+        const formControls = document.querySelectorAll('.form-control');
+        formControls.forEach(control => {
+            control.addEventListener('focus', function() {
+                this.parentNode.style.transform = 'translateY(-2px)';
+            });
+            
+            control.addEventListener('blur', function() {
+                this.parentNode.style.transform = 'translateY(0)';
+            });
+        });
+    });
+</script>
+{% endblock %}

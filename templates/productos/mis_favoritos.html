@@ -1,0 +1,980 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mis Favoritos - MarketU{% endblock %}
+
+{% block content %}
+<div class="favoritos-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1>❤️ Mis Favoritos</h1>
+            <p>Todos los productos que te han gustado en MarketU</p>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'productos:explorar' %}" class="btn btn-secondary">
+                🔍 Seguir Explorando
+            </a>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="estadisticas-rapidas">
+        <div class="stat-card">
+            <div class="stat-icon">❤️</div>
+            <div class="stat-info">
+                <div class="stat-number">{{ productos|length }}</div>
+                <div class="stat-label">Productos Favoritos</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🟢</div>
+            <div class="stat-info">
+                <div class="stat-number">{{ productos_disponibles|default:0 }}</div>
+                <div class="stat-label">Disponibles</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-info">
+                <div class="stat-number">${{ precio_total|default:0|floatformat:2 }}</div>
+                <div class="stat-label">Valor Total</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🏫</div>
+            <div class="stat-info">
+                <div class="stat-number">{{ universidades_unicas|default:0 }}</div>
+                <div class="stat-label">Universidades</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros SIMPLIFICADOS -->
+    <div class="filtros-container">
+        <div class="filtros-header">
+            <h3>🔧 Filtrar Favoritos</h3>
+            <span class="filtros-count">{{ productos|length }} productos</span>
+        </div>
+        
+        <!-- Filtros por estado -->
+        <div class="filtros-botones">
+            <a href="?filtro=todos" class="filtro-btn {% if filtro_activo == 'todos' or not filtro_activo %}active{% endif %}">Todos</a>
+            <a href="?filtro=disponible" class="filtro-btn {% if filtro_activo == 'disponible' %}active{% endif %}">🟢 Disponibles</a>
+            <a href="?filtro=reservado" class="filtro-btn {% if filtro_activo == 'reservado' %}active{% endif %}">🟡 Reservados</a>
+            <a href="?filtro=vendido" class="filtro-btn {% if filtro_activo == 'vendido' %}active{% endif %}">🔴 Vendidos</a>
+            <a href="?filtro=nuevo" class="filtro-btn {% if filtro_activo == 'nuevo' %}active{% endif %}">🆕 Recientes</a>
+        </div>
+        
+        <!-- Filtro por categoría -->
+        <div class="filtro-categorias">
+            <form method="GET" class="filtro-form">
+                <select name="categoria" class="categoria-select" onchange="this.form.submit()">
+                    <option value="">Todas las categorías</option>
+                    {% for categoria in categorias_favoritos %}
+                    <option value="{{ categoria.nombre }}" {% if categoria_filtro == categoria.nombre %}selected{% endif %}>
+                        {{ categoria.get_nombre_display }}
+                    </option>
+                    {% endfor %}
+                </select>
+                {% if filtro_activo %}
+                <input type="hidden" name="filtro" value="{{ filtro_activo }}">
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <!-- Contador de resultados -->
+    <div class="resultados-info">
+        Mostrando {{ productos|length }} de {{ total_productos }} productos
+        {% if filtro_activo or categoria_filtro %}
+        <a href="{% url 'productos:mis_favoritos' %}" class="clear-filters">🗑️ Limpiar filtros</a>
+        {% endif %}
+    </div>
+
+    <!-- Grid de productos favoritos -->
+    {% if productos %}
+    <div class="favoritos-grid">
+        {% for producto in productos %}
+        <div class="favorito-card">
+            <div class="favorito-header">
+                <div class="estado-badge {{ producto.estado }}" title="Estado del producto">
+                    {{ producto.get_estado_display }}
+                </div>
+                
+                <!-- Botón para quitar de favoritos - USANDO DJANGO -->
+                <form method="POST" action="{% url 'productos:toggle_favorito' producto.id %}" class="favorito-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{% url 'productos:mis_favoritos' %}">
+                    <button type="submit" class="btn-quitar-favorito" title="Quitar de favoritos" onclick="return confirm('¿Estás seguro de que quieres quitar este producto de tus favoritos?')">
+                        ❌
+                    </button>
+                </form>
+            </div>
+
+            <div class="favorito-image">
+                <a href="{% url 'productos:detalle' producto.id %}">
+                    {% if producto.imagenes.first %}
+                    <img src="{{ producto.imagenes.first.imagen.url }}" 
+                         alt="{{ producto.nombre }}"
+                         loading="lazy">
+                    {% else %}
+                    <div class="no-image">
+                        <span>📦</span>
+                        <p>Sin imagen</p>
+                    </div>
+                    {% endif %}
+                </a>
+                
+                <div class="favorito-badges">
+                    {% if producto.condicion == 'nuevo' %}
+                    <span class="badge nuevo" title="Producto nuevo">🆕 Nuevo</span>
+                    {% endif %}
+                    {% if producto.es_multiple %}
+                    <span class="badge multiple" title="Múltiples unidades disponibles">📦 Múltiples</span>
+                    {% endif %}
+                    {% if producto.es_nuevo %}
+                    <span class="badge recien" title="Publicado en las últimas 24h">🆕 Recién publicado</span>
+                    {% endif %}
+                </div>
+
+                <!-- Overlay de acciones rápidas - SIN CONTACTAR -->
+                <div class="favorito-overlay">
+                    <div class="overlay-actions">
+                        <a href="{% url 'productos:detalle' producto.id %}" class="btn-overlay btn-ver-detalles">
+                            👁️ Ver Detalles
+                        </a>
+                        <a href="#" class="btn-overlay btn-compartir" onclick="compartirProducto({{ producto.id }})">
+                            📤 Compartir
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="favorito-info">
+                <h3 class="favorito-nombre">
+                    <a href="{% url 'productos:detalle' producto.id %}">
+                        {{ producto.nombre }}
+                    </a>
+                </h3>
+                <p class="favorito-precio">{{ producto.precio_formateado }}</p>
+                
+                <div class="favorito-meta">
+                    <span class="favorito-categoria">
+                        {{ producto.categoria.get_nombre_display }}
+                    </span>
+                    <span class="favorito-vendedor">
+                        👤 {{ producto.vendedor.apodo }}
+                    </span>
+                    <span class="favorito-ubicacion">
+                        {{ producto.ubicacion_completa }}
+                    </span>
+                </div>
+                
+                <div class="favorito-stats">
+                    <div class="stat" title="Visitas totales">
+                        <span class="stat-icon">👁️</span>
+                        <span>{{ producto.visitas }}</span>
+                    </div>
+                    <div class="stat" title="Total de favoritos">
+                        <span class="stat-icon">❤️</span>
+                        <span>{{ producto.cantidad_favoritos }}</span>
+                    </div>
+                    <div class="stat" title="Tiempo desde publicación">
+                        <span class="stat-icon">📅</span>
+                        <span>{{ producto.tiempo_publicacion }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="favorito-actions">
+                <a href="{% url 'productos:detalle' producto.id %}" class="btn btn-primary">
+                    👀 Ver Producto
+                </a>
+                {% if producto.estado != 'disponible' %}
+                <div class="no-disponible-msg">
+                    {% if producto.estado == 'vendido' %}
+                    ❌ Vendido
+                    {% elif producto.estado == 'reservado' %}
+                    ⏳ Reservado
+                    {% else %}
+                    ❌ No disponible
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Estado vacío -->
+    <div class="empty-state">
+        <div class="empty-icon">❤️</div>
+        <h3>No tienes productos favoritos</h3>
+        <p>Explora el marketplace y guarda los productos que más te gusten para verlos después</p>
+        <div class="empty-actions">
+            <a href="{% url 'productos:explorar' %}" class="btn btn-primary btn-large">
+                🔍 Explorar Productos
+            </a>
+            <a href="{% url 'productos:por_categoria' 1 %}" class="btn btn-secondary">
+                📚 Ver Libros de Texto
+            </a>
+        </div>
+        
+        <!-- Productos populares como sugerencia -->
+        <div class="sugerencias-populares">
+            <h4>💡 Categorías populares:</h4>
+            <div class="categorias-populares">
+                <a href="{% url 'productos:por_categoria' 1 %}" class="categoria-sugerida">
+                    <span>📚</span>
+                    <span>Libros de texto</span>
+                </a>
+                <a href="{% url 'productos:por_categoria' 3 %}" class="categoria-sugerida">
+                    <span>💻</span>
+                    <span>Electrónica</span>
+                </a>
+                <a href="{% url 'productos:por_categoria' 2 %}" class="categoria-sugerida">
+                    <span>📝</span>
+                    <span>Apuntes</span>
+                </a>
+                <a href="{% url 'productos:por_categoria' 4 %}" class="categoria-sugerida">
+                    <span>🔬</span>
+                    <span>Instrumentos Lab</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Sugerencias basadas en favoritos -->
+    {% if productos %}
+    <div class="sugerencias-section">
+        <h2>🎯 Te podría interesar</h2>
+        <p class="sugerencias-desc">Productos similares a tus favoritos</p>
+        <div class="sugerencias-grid">
+            <div class="sugerencia-placeholder">
+                <p>💡 Próximamente: productos recomendados basados en tus favoritos</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .favoritos-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .header-content h1 {
+        color: #fff;
+        font-size: 32px;
+        margin: 0 0 5px 0;
+    }
+
+    .header-content p {
+        color: #ccc;
+        margin: 0;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        text-align: center;
+    }
+
+    .btn-primary {
+        background: #4CAF50;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #45a049;
+        transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+        background: #666;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #777;
+        transform: translateY(-2px);
+    }
+
+    .btn-large {
+        padding: 15px 30px;
+        font-size: 16px;
+    }
+
+    /* Estadísticas rápidas */
+    .estadisticas-rapidas {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: rgba(30, 30, 30, 0.8);
+        padding: 20px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: transform 0.3s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .stat-icon {
+        font-size: 32px;
+    }
+
+    .stat-number {
+        font-size: 24px;
+        font-weight: bold;
+        color: #e91e63;
+        line-height: 1;
+    }
+
+    .stat-label {
+        color: #ccc;
+        font-size: 14px;
+        margin-top: 5px;
+    }
+
+    /* Filtros SIMPLIFICADOS */
+    .filtros-container {
+        background: rgba(30, 30, 30, 0.8);
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .filtros-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .filtros-header h3 {
+        color: #fff;
+        margin: 0;
+        font-size: 18px;
+    }
+
+    .filtros-count {
+        color: #e91e63;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .filtros-botones {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+
+    .filtro-btn {
+        padding: 8px 16px;
+        background: rgba(40, 40, 40, 0.8);
+        border: 1px solid #444;
+        border-radius: 6px;
+        color: #ccc;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 14px;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .filtro-btn.active,
+    .filtro-btn:hover {
+        background: #e91e63;
+        color: white;
+        border-color: #e91e63;
+        text-decoration: none;
+    }
+
+    .filtro-categorias {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .filtro-form {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .categoria-select {
+        padding: 8px 12px;
+        border: 1px solid #444;
+        border-radius: 6px;
+        background: rgba(40, 40, 40, 0.8);
+        color: #fff;
+        min-width: 200px;
+    }
+
+    /* Contador de resultados */
+    .resultados-info {
+        text-align: center;
+        color: #888;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+
+    .clear-filters {
+        color: #e91e63;
+        text-decoration: none;
+        margin-left: 10px;
+    }
+
+    .clear-filters:hover {
+        text-decoration: underline;
+    }
+
+    /* Grid de favoritos */
+    .favoritos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 25px;
+    }
+
+    .favorito-card {
+        background: rgba(30, 30, 30, 0.8);
+        border-radius: 15px;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+    }
+
+    .favorito-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 30px rgba(233, 30, 99, 0.2);
+        border-color: rgba(233, 30, 99, 0.3);
+    }
+
+    .favorito-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        background: rgba(40, 40, 40, 0.6);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .estado-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+        transition: transform 0.2s;
+    }
+
+    .estado-badge:hover {
+        transform: scale(1.05);
+    }
+
+    .estado-badge.disponible {
+        background: #4CAF50;
+        color: white;
+    }
+
+    .estado-badge.reservado {
+        background: #ff9800;
+        color: white;
+    }
+
+    .estado-badge.vendido {
+        background: #f44336;
+        color: white;
+    }
+
+    .favorito-form {
+        margin: 0;
+        padding: 0;
+    }
+
+    .btn-quitar-favorito {
+        background: rgba(244, 67, 54, 0.2);
+        border: 1px solid rgba(244, 67, 54, 0.3);
+        color: #f44336;
+        padding: 6px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 14px;
+    }
+
+    .btn-quitar-favorito:hover {
+        background: #f44336;
+        color: white;
+        transform: scale(1.1);
+    }
+
+    .favorito-image {
+        position: relative;
+        height: 200px;
+        background: rgba(40, 40, 40, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .favorito-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .favorito-card:hover .favorito-image img {
+        transform: scale(1.05);
+    }
+
+    .no-image {
+        font-size: 48px;
+        color: #666;
+        text-align: center;
+    }
+
+    .no-image p {
+        font-size: 14px;
+        margin: 5px 0 0 0;
+    }
+
+    .favorito-badges {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    .badge.nuevo {
+        background: #2196F3;
+        color: white;
+    }
+
+    .badge.multiple {
+        background: #9C27B0;
+        color: white;
+    }
+
+    .badge.recien {
+        background: #FF5722;
+        color: white;
+    }
+
+    /* Overlay de acciones - SIN CONTACTAR */
+    .favorito-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .favorito-card:hover .favorito-overlay {
+        opacity: 1;
+    }
+
+    .overlay-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .btn-overlay {
+        padding: 10px 20px;
+        background: #e91e63;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s;
+        min-width: 150px;
+        text-align: center;
+        cursor: pointer;
+    }
+
+    .btn-overlay:hover {
+        background: #c2185b;
+        transform: translateY(-2px);
+    }
+
+    .btn-ver-detalles {
+        background: #2196F3;
+    }
+
+    .btn-ver-detalles:hover {
+        background: #1976D2;
+    }
+
+    .btn-compartir {
+        background: #9C27B0;
+    }
+
+    .btn-compartir:hover {
+        background: #7B1FA2;
+    }
+
+    /* Información del favorito */
+    .favorito-info {
+        padding: 20px;
+    }
+
+    .favorito-nombre {
+        color: #fff;
+        font-size: 18px;
+        margin: 0 0 10px 0;
+        line-height: 1.3;
+    }
+
+    .favorito-nombre a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .favorito-nombre a:hover {
+        color: #4CAF50;
+    }
+
+    .favorito-precio {
+        font-size: 22px;
+        font-weight: bold;
+        color: #4CAF50;
+        margin: 0 0 15px 0;
+    }
+
+    .favorito-meta {
+        margin-bottom: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .favorito-categoria,
+    .favorito-vendedor,
+    .favorito-ubicacion {
+        color: #ccc;
+        font-size: 14px;
+    }
+
+    .favorito-stats {
+        display: flex;
+        gap: 15px;
+        padding-top: 15px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .stat {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: #888;
+        font-size: 12px;
+        cursor: help;
+    }
+
+    .stat-icon {
+        font-size: 14px;
+    }
+
+    .favorito-actions {
+        padding: 15px 20px;
+        background: rgba(40, 40, 40, 0.6);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .no-disponible-msg {
+        text-align: center;
+        color: #f44336;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 10px;
+        background: rgba(244, 67, 54, 0.1);
+        border-radius: 6px;
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        background: rgba(30, 30, 30, 0.8);
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .empty-icon {
+        font-size: 80px;
+        margin-bottom: 20px;
+        color: #e91e63;
+    }
+
+    .empty-state h3 {
+        color: #fff;
+        margin-bottom: 10px;
+        font-size: 24px;
+    }
+
+    .empty-state p {
+        color: #ccc;
+        margin-bottom: 25px;
+        font-size: 16px;
+    }
+
+    .empty-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 30px;
+    }
+
+    .sugerencias-populares {
+        margin-top: 30px;
+    }
+
+    .sugerencias-populares h4 {
+        color: #fff;
+        margin-bottom: 15px;
+        font-size: 18px;
+    }
+
+    .categorias-populares {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .categoria-sugerida {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px;
+        background: rgba(40, 40, 40, 0.6);
+        border-radius: 8px;
+        color: #ccc;
+        transition: all 0.3s;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .categoria-sugerida:hover {
+        background: rgba(76, 175, 80, 0.2);
+        color: #fff;
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+
+    .categoria-sugerida span:first-child {
+        font-size: 20px;
+    }
+
+    /* Sugerencias */
+    .sugerencias-section {
+        margin-top: 50px;
+        padding-top: 30px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sugerencias-section h2 {
+        color: #fff;
+        margin-bottom: 10px;
+        font-size: 24px;
+        text-align: center;
+    }
+
+    .sugerencias-desc {
+        color: #ccc;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .sugerencias-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+
+    .sugerencia-placeholder {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 40px;
+        background: rgba(40, 40, 40, 0.6);
+        border-radius: 10px;
+        border: 2px dashed #666;
+    }
+
+    .sugerencia-placeholder p {
+        color: #888;
+        margin: 0;
+        font-size: 16px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .header-actions {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .favoritos-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .estadisticas-rapidas {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .filtros-botones {
+            justify-content: center;
+        }
+
+        .filtro-categorias {
+            justify-content: center;
+        }
+
+        .categoria-select {
+            min-width: 150px;
+        }
+
+        .empty-actions {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .categorias-populares {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .favoritos-container {
+            padding: 15px;
+        }
+
+        .estadisticas-rapidas {
+            grid-template-columns: 1fr;
+        }
+
+        .filtros-botones {
+            flex-direction: column;
+        }
+
+        .favorito-actions {
+            flex-direction: column;
+        }
+
+        .categorias-populares {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Solo mantener la funcionalidad de compartir y efectos visuales
+document.addEventListener('DOMContentLoaded', function() {
+    // Efectos hover mejorados
+    document.querySelectorAll('.favorito-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-8px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+
+function compartirProducto(productoId) {
+    const url = `${window.location.origin}/productos/${productoId}/`;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: 'Mira este producto en MarketU',
+            text: 'Encontré este producto interesante en MarketU',
+            url: url
+        });
+    } else {
+        // Fallback para navegadores que no soportan Web Share API
+        navigator.clipboard.writeText(url).then(() => {
+            alert('🔗 Enlace copiado al portapapeles');
+        }).catch(() => {
+            // Fallback más básico
+            prompt('Comparte este enlace:', url);
+        });
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,737 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Estadísticas de Productos - MarketU{% endblock %}
+
+{% block content %}
+<div class="estadisticas-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1>📊 Estadísticas de Mis Productos</h1>
+            <p>Analiza el rendimiento de tus productos en MarketU</p>
+        </div>
+        <div class="header-actions">
+            <a href="{% url 'productos:mis_productos' %}" class="btn btn-secondary">
+                📦 Volver a Mis Productos
+            </a>
+        </div>
+    </div>
+
+    <!-- Resumen General -->
+    <div class="resumen-general">
+        <h2>📈 Resumen General</h2>
+        <div class="estadisticas-grid">
+            <div class="stat-card grande">
+                <div class="stat-icon">📦</div>
+                <div class="stat-info">
+                    <div class="stat-number">{{ total_productos }}</div>
+                    <div class="stat-label">Total de Productos</div>
+                </div>
+            </div>
+            <div class="stat-card grande">
+                <div class="stat-icon">👁️</div>
+                <div class="stat-info">
+                    <div class="stat-number">{{ total_visitas }}</div>
+                    <div class="stat-label">Visitas Totales</div>
+                </div>
+            </div>
+            <div class="stat-card grande">
+                <div class="stat-icon">❤️</div>
+                <div class="stat-info">
+                    <div class="stat-number">{{ total_favoritos }}</div>
+                    <div class="stat-label">Favoritos Totales</div>
+                </div>
+            </div>
+            <div class="stat-card grande">
+                <div class="stat-icon">🆕</div>
+                <div class="stat-info">
+                    <div class="stat-number">{{ productos_recientes }}</div>
+                    <div class="stat-label">Publicados esta semana</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Distribución por Estado -->
+    <div class="seccion-estadisticas">
+        <h2>📋 Distribución por Estado</h2>
+        <div class="distribucion-grid">
+            {% for item in productos_por_estado %}
+            <div class="estado-card {{ item.estado }}">
+                <div class="estado-icon">
+                    {% if item.estado == 'disponible' %}🟢
+                    {% elif item.estado == 'reservado' %}🟡
+                    {% elif item.estado == 'vendido' %}🔴
+                    {% elif item.estado == 'inactivo' %}⚫
+                    {% else %}📦{% endif %}
+                </div>
+                <div class="estado-info">
+                    <div class="estado-cantidad">{{ item.total }}</div>
+                    <div class="estado-nombre">
+                        {% if item.estado == 'disponible' %}Disponibles
+                        {% elif item.estado == 'reservado' %}Reservados
+                        {% elif item.estado == 'vendido' %}Vendidos
+                        {% elif item.estado == 'inactivo' %}Inactivos
+                        {% else %}{{ item.estado }}{% endif %}
+                    </div>
+                    <div class="estado-porcentaje">
+                        {{ item.total|floatformat:0 }} productos
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Productos Más Populares -->
+    {% if productos_populares %}
+    <div class="seccion-estadisticas">
+        <h2>🔥 Productos Más Populares</h2>
+        <div class="populares-grid">
+            {% for producto in productos_populares %}
+            <div class="producto-popular">
+                <div class="popular-rank">#{{ forloop.counter }}</div>
+                <div class="popular-image">
+                    {% if producto.imagenes.first %}
+                    <img src="{{ producto.imagenes.first.imagen.url }}" alt="{{ producto.nombre }}">
+                    {% else %}
+                    <div class="no-image">📦</div>
+                    {% endif %}
+                </div>
+                <div class="popular-info">
+                    <h4 class="popular-nombre">{{ producto.nombre }}</h4>
+                    <p class="popular-precio">{{ producto.precio_formateado }}</p>
+                    <div class="popular-stats">
+                        <span class="stat-item">👁️ {{ producto.visitas }}</span>
+                        <span class="stat-item">❤️ {{ producto.cantidad_favoritos }}</span>
+                    </div>
+                </div>
+                <div class="popular-actions">
+                    <a href="{% url 'productos:detalle' producto.id %}" class="btn btn-sm btn-primary">
+                        Ver
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Distribución por Categoría -->
+    {% if productos_por_categoria %}
+    <div class="seccion-estadisticas">
+        <h2>🏷️ Distribución por Categoría</h2>
+        <div class="categorias-grid">
+            {% for item in productos_por_categoria %}
+            <div class="categoria-card">
+                <div class="categoria-header">
+                    <h4>{{ item.categoria__nombre|default:"Sin categoría" }}</h4>
+                    <span class="categoria-cantidad">{{ item.total }} productos</span>
+                </div>
+                <div class="categoria-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {% widthratio item.total total_productos 100 %}%"></div>
+                    </div>
+                    <span class="progress-text">{% widthratio item.total total_productos 100 %}%</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Insights y Recomendaciones -->
+    <div class="seccion-estadisticas">
+        <h2>💡 Insights y Recomendaciones</h2>
+        <div class="insights-grid">
+            {% if productos_activos.count == 0 %}
+            <div class="insight-card warning">
+                <div class="insight-icon">⚠️</div>
+                <div class="insight-content">
+                    <h4>No tienes productos activos</h4>
+                    <p>Publica nuevos productos para empezar a vender en MarketU.</p>
+                    <a href="{% url 'productos:vender' %}" class="btn btn-primary btn-sm">
+                        🎉 Publicar Producto
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if productos_populares.0.visitas > 50 %}
+            <div class="insight-card success">
+                <div class="insight-icon">🌟</div>
+                <div class="insight-content">
+                    <h4>¡Tienes productos populares!</h4>
+                    <p>"{{ productos_populares.0.nombre }}" tiene {{ productos_populares.0.visitas }} visitas.</p>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if productos_recientes > 0 %}
+            <div class="insight-card info">
+                <div class="insight-icon">📈</div>
+                <div class="insight-content">
+                    <h4>Actividad reciente</h4>
+                    <p>Has publicado {{ productos_recientes }} productos esta semana.</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="insight-card tip">
+                <div class="insight-icon">💡</div>
+                <div class="insight-content">
+                    <h4>Tip para vender más</h4>
+                    <p>Los productos con buenas fotos y descripciones detalladas reciben 3x más visitas.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <div class="acciones-rapidas">
+        <h3>⚡ Acciones Rápidas</h3>
+        <div class="acciones-grid">
+            <a href="{% url 'productos:vender' %}" class="accion-card">
+                <div class="accion-icon">🎉</div>
+                <div class="accion-content">
+                    <h4>Publicar Nuevo Producto</h4>
+                    <p>Agrega un nuevo producto a tu inventario</p>
+                </div>
+            </a>
+            <a href="{% url 'productos:mis_productos' %}?estado=disponible" class="accion-card">
+                <div class="accion-icon">📦</div>
+                <div class="accion-content">
+                    <h4>Gestionar Disponibles</h4>
+                    <p>Ver y editar productos disponibles</p>
+                </div>
+            </a>
+            <a href="{% url 'productos:ventas' %}" class="accion-card">
+                <div class="accion-icon">💰</div>
+                <div class="accion-content">
+                    <h4>Ver Ventas</h4>
+                    <p>Estadísticas detalladas de ventas</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .estadisticas-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .header-content h1 {
+        color: #fff;
+        font-size: 32px;
+        margin: 0 0 5px 0;
+    }
+
+    .header-content p {
+        color: #ccc;
+        margin: 0;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: #4CAF50;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #45a049;
+        transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+        background: #666;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #777;
+        transform: translateY(-2px);
+    }
+
+    .btn-sm {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+
+    /* Resumen General */
+    .resumen-general {
+        margin-bottom: 40px;
+    }
+
+    .resumen-general h2 {
+        color: #fff;
+        margin-bottom: 20px;
+        font-size: 24px;
+    }
+
+    .estadisticas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+
+    .stat-card {
+        background: rgba(30, 30, 30, 0.8);
+        padding: 25px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: transform 0.3s;
+    }
+
+    .stat-card.grande {
+        padding: 30px;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-icon {
+        font-size: 40px;
+    }
+
+    .stat-card.grande .stat-icon {
+        font-size: 48px;
+    }
+
+    .stat-number {
+        font-size: 32px;
+        font-weight: bold;
+        color: #4CAF50;
+        line-height: 1;
+    }
+
+    .stat-card.grande .stat-number {
+        font-size: 40px;
+    }
+
+    .stat-label {
+        color: #ccc;
+        font-size: 16px;
+        margin-top: 8px;
+    }
+
+    /* Secciones de estadísticas */
+    .seccion-estadisticas {
+        margin-bottom: 40px;
+        padding: 30px;
+        background: rgba(30, 30, 30, 0.6);
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .seccion-estadisticas h2 {
+        color: #fff;
+        margin-bottom: 25px;
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Distribución por Estado */
+    .distribucion-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+
+    .estado-card {
+        background: rgba(40, 40, 40, 0.8);
+        padding: 20px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        transition: transform 0.3s;
+    }
+
+    .estado-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .estado-card.disponible {
+        border-left: 4px solid #4CAF50;
+    }
+
+    .estado-card.reservado {
+        border-left: 4px solid #ff9800;
+    }
+
+    .estado-card.vendido {
+        border-left: 4px solid #f44336;
+    }
+
+    .estado-card.inactivo {
+        border-left: 4px solid #666;
+    }
+
+    .estado-icon {
+        font-size: 32px;
+    }
+
+    .estado-cantidad {
+        font-size: 24px;
+        font-weight: bold;
+        color: #fff;
+        line-height: 1;
+    }
+
+    .estado-nombre {
+        color: #ccc;
+        font-size: 14px;
+        margin: 5px 0;
+    }
+
+    .estado-porcentaje {
+        color: #888;
+        font-size: 12px;
+    }
+
+    /* Productos Populares */
+    .populares-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .producto-popular {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px;
+        background: rgba(40, 40, 40, 0.6);
+        border-radius: 8px;
+        transition: transform 0.3s;
+    }
+
+    .producto-popular:hover {
+        transform: translateX(5px);
+        background: rgba(50, 50, 50, 0.8);
+    }
+
+    .popular-rank {
+        background: #4CAF50;
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 16px;
+    }
+
+    .popular-image {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        overflow: hidden;
+        background: rgba(50, 50, 50, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .popular-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .no-image {
+        font-size: 24px;
+        color: #666;
+    }
+
+    .popular-info {
+        flex: 1;
+    }
+
+    .popular-nombre {
+        color: #fff;
+        margin: 0 0 5px 0;
+        font-size: 16px;
+    }
+
+    .popular-precio {
+        color: #4CAF50;
+        font-weight: bold;
+        margin: 0 0 8px 0;
+    }
+
+    .popular-stats {
+        display: flex;
+        gap: 15px;
+    }
+
+    .stat-item {
+        color: #888;
+        font-size: 12px;
+    }
+
+    /* Categorías */
+    .categorias-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .categoria-card {
+        background: rgba(40, 40, 40, 0.6);
+        padding: 20px;
+        border-radius: 8px;
+    }
+
+    .categoria-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .categoria-header h4 {
+        color: #fff;
+        margin: 0;
+        font-size: 16px;
+    }
+
+    .categoria-cantidad {
+        color: #4CAF50;
+        font-weight: bold;
+        font-size: 14px;
+    }
+
+    .categoria-progress {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .progress-bar {
+        flex: 1;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: #4CAF50;
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+
+    .progress-text {
+        color: #ccc;
+        font-size: 12px;
+        min-width: 40px;
+    }
+
+    /* Insights */
+    .insights-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .insight-card {
+        padding: 20px;
+        border-radius: 10px;
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+        transition: transform 0.3s;
+    }
+
+    .insight-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .insight-card.warning {
+        background: rgba(255, 152, 0, 0.1);
+        border: 1px solid rgba(255, 152, 0, 0.3);
+    }
+
+    .insight-card.success {
+        background: rgba(76, 175, 80, 0.1);
+        border: 1px solid rgba(76, 175, 80, 0.3);
+    }
+
+    .insight-card.info {
+        background: rgba(33, 150, 243, 0.1);
+        border: 1px solid rgba(33, 150, 243, 0.3);
+    }
+
+    .insight-card.tip {
+        background: rgba(156, 39, 176, 0.1);
+        border: 1px solid rgba(156, 39, 176, 0.3);
+    }
+
+    .insight-icon {
+        font-size: 24px;
+        margin-top: 5px;
+    }
+
+    .insight-content h4 {
+        color: #fff;
+        margin: 0 0 8px 0;
+        font-size: 16px;
+    }
+
+    .insight-content p {
+        color: #ccc;
+        margin: 0 0 12px 0;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    /* Acciones Rápidas */
+    .acciones-rapidas {
+        margin-top: 40px;
+    }
+
+    .acciones-rapidas h3 {
+        color: #fff;
+        margin-bottom: 20px;
+        font-size: 20px;
+    }
+
+    .acciones-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+
+    .accion-card {
+        background: rgba(30, 30, 30, 0.8);
+        padding: 25px;
+        border-radius: 10px;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        transition: all 0.3s;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .accion-card:hover {
+        transform: translateY(-5px);
+        background: rgba(40, 40, 40, 0.9);
+        text-decoration: none;
+        border-color: #4CAF50;
+    }
+
+    .accion-icon {
+        font-size: 32px;
+    }
+
+    .accion-content h4 {
+        color: #fff;
+        margin: 0 0 8px 0;
+        font-size: 16px;
+    }
+
+    .accion-content p {
+        color: #ccc;
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .estadisticas-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .distribucion-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .producto-popular {
+            flex-direction: column;
+            text-align: center;
+            gap: 10px;
+        }
+
+        .popular-stats {
+            justify-content: center;
+        }
+
+        .insights-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .acciones-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .categoria-progress {
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-start;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .estadisticas-container {
+            padding: 15px;
+        }
+
+        .seccion-estadisticas {
+            padding: 20px;
+        }
+
+        .stat-card {
+            padding: 20px;
+        }
+
+        .stat-card.grande {
+            padding: 25px;
+        }
+    }
+</style>
+{% endblock %}

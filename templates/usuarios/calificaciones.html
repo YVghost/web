@@ -1,0 +1,486 @@
+{% extends 'base.html' %}
+
+{% block title %}Calificaciones de {{ estudiante.user.get_full_name }} - MarketU{% endblock %}
+
+{% block content %}
+<div class="calificaciones-container">
+    <!-- Header -->
+    <div class="calificaciones-header">
+        <a href="{% url 'usuarios:perfil_con_id' id=estudiante.id %}" class="back-link">← Volver al perfil</a>
+        <h1>⭐ Calificaciones de {{ estudiante.user.get_full_name }}</h1>
+        <div class="resumen-calificaciones">
+            <div class="puntuacion-global">
+                <span class="puntuacion-numero">{{ estadisticas.promedio|default:0|floatformat:1 }}</span>
+                <span class="puntuacion-estrellas">{{ estudiante.estrellas_display }}</span>
+                <span class="total-calificaciones">{{ estadisticas.total|default:0 }} calificación(es)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Distribución de estrellas -->
+    {% if estadisticas.total > 0 %}
+    <div class="distribucion-estrellas">
+        <h2>📊 Distribución de Calificaciones</h2>
+        <div class="distribucion-grid">
+            {% for estrellas, cantidad in estadisticas.distribucion.items %}
+            <div class="nivel-estrellas" data-cantidad="{{ cantidad }}">
+                <span class="estrellas-texto">{{ estrellas }}⭐</span>
+                <div class="barra-container">
+                    <div class="barra-progreso" style="width: 0%"></div>
+                </div>
+                <span class="cantidad-calificaciones">{{ cantidad }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Lista de calificaciones -->
+    <div class="lista-calificaciones">
+        <h2>💬 Todas las Calificaciones</h2>
+        
+        {% if calificaciones %}
+        <div class="calificaciones-grid">
+            {% for calificacion in calificaciones %}
+            <div class="calificacion-card">
+                <div class="calificacion-header">
+                    <div class="calificador-info">
+                        <div class="calificador-avatar">
+                            {% if calificacion.calificador.avatar %}
+                                <img src="{{ calificacion.calificador.avatar.url }}" alt="{{ calificacion.calificador.user.get_full_name }}">
+                            {% else %}
+                                <div class="avatar-placeholder-small">
+                                    {{ calificacion.calificador.user.first_name|first|upper }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="calificador-datos">
+                            <h4>{{ calificacion.calificador.user.get_full_name }}</h4>
+                            <span class="fecha-calificacion">{{ calificacion.fecha_calificacion|date:"d M Y" }}</span>
+                        </div>
+                    </div>
+                    <div class="estrellas-calificacion">
+                        {% with ''|center:calificacion.estrellas as range %}
+                            {% for _ in range %}⭐{% endfor %}
+                        {% endwith %}
+                    </div>
+                </div>
+                
+                {% if calificacion.comentario %}
+                <div class="comentario-calificacion">
+                    <p>"{{ calificacion.comentario }}"</p>
+                </div>
+                {% endif %}
+                
+                {% if calificacion.producto %}
+                <div class="producto-relacionado">
+                    <small>Producto: {{ calificacion.producto.nombre }}</small>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="sin-calificaciones">
+            <div class="empty-state">
+                <h3>😔 Aún no hay calificaciones</h3>
+                <p>{{ estudiante.user.get_full_name }} no ha recibido calificaciones todavía.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Acción para calificar -->
+    {% if user.is_authenticated and user.estudiante and user.estudiante.id != estudiante.id %}
+    <div class="accion-calificar">
+        <a href="{% url 'usuarios:calificar_vendedor' vendedor_id=estudiante.id %}" class="btn-calificar-grande">
+            ⭐ Calificar a {{ estudiante.user.first_name }}
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calificaciones-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .back-link {
+        color: #4CAF50;
+        text-decoration: none;
+        font-size: 14px;
+        margin-bottom: 20px;
+        display: inline-block;
+    }
+
+    .back-link:hover {
+        text-decoration: underline;
+    }
+
+    .calificaciones-header {
+        text-align: center;
+        margin-bottom: 40px;
+        padding: 30px;
+        background: rgba(30, 30, 30, 0.8);
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .calificaciones-header h1 {
+        color: #fff;
+        margin-bottom: 20px;
+        font-size: 28px;
+    }
+
+    .resumen-calificaciones {
+        display: flex;
+        justify-content: center;
+    }
+
+    .puntuacion-global {
+        text-align: center;
+    }
+
+    .puntuacion-numero {
+        display: block;
+        font-size: 48px;
+        font-weight: bold;
+        color: #4CAF50;
+        line-height: 1;
+        margin-bottom: 10px;
+    }
+
+    .puntuacion-estrellas {
+        display: block;
+        font-size: 20px;
+        margin: 10px 0;
+        color: #FFD700;
+    }
+
+    .total-calificaciones {
+        color: #888;
+        font-size: 14px;
+        display: block;
+    }
+
+    .distribucion-estrellas {
+        background: rgba(30, 30, 30, 0.8);
+        padding: 25px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .distribucion-estrellas h2 {
+        color: #fff;
+        margin-bottom: 20px;
+        font-size: 20px;
+    }
+
+    .distribucion-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .nivel-estrellas {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 5px 0;
+    }
+
+    .estrellas-texto {
+        color: #fff;
+        width: 50px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .barra-container {
+        flex: 1;
+        height: 16px;
+        background: rgba(40, 40, 40, 0.8);
+        border-radius: 8px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .barra-progreso {
+        height: 100%;
+        background: linear-gradient(90deg, #4CAF50, #45a049);
+        border-radius: 8px;
+        transition: width 1s ease-in-out;
+        min-width: 0%;
+    }
+
+    .cantidad-calificaciones {
+        color: #ccc;
+        width: 30px;
+        text-align: right;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .lista-calificaciones {
+        margin-bottom: 30px;
+    }
+
+    .lista-calificaciones h2 {
+        color: #fff;
+        margin-bottom: 20px;
+        font-size: 24px;
+    }
+
+    .calificaciones-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .calificacion-card {
+        background: rgba(30, 30, 30, 0.8);
+        padding: 20px;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: transform 0.2s ease;
+    }
+
+    .calificacion-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(76, 175, 80, 0.3);
+    }
+
+    .calificacion-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+
+    .calificador-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+    }
+
+    .calificador-avatar {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        overflow: hidden;
+        flex-shrink: 0;
+        border: 2px solid #4CAF50;
+    }
+
+    .calificador-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .avatar-placeholder-small {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #4CAF50, #45a049);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: bold;
+        color: white;
+    }
+
+    .calificador-datos h4 {
+        color: #fff;
+        margin: 0 0 4px 0;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .fecha-calificacion {
+        color: #888;
+        font-size: 12px;
+    }
+
+    .estrellas-calificacion {
+        font-size: 16px;
+        color: #FFD700;
+        flex-shrink: 0;
+    }
+
+    .comentario-calificacion {
+        background: rgba(40, 40, 40, 0.6);
+        padding: 12px 15px;
+        border-radius: 8px;
+        border-left: 4px solid #4CAF50;
+        margin: 10px 0;
+    }
+
+    .comentario-calificacion p {
+        color: #ccc;
+        margin: 0;
+        font-style: italic;
+        line-height: 1.5;
+        font-size: 14px;
+    }
+
+    .producto-relacionado {
+        color: #888;
+        font-size: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 8px;
+        margin-top: 8px;
+    }
+
+    .sin-calificaciones {
+        text-align: center;
+        padding: 60px 20px;
+        background: rgba(30, 30, 30, 0.8);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .empty-state h3 {
+        color: #fff;
+        margin-bottom: 10px;
+        font-size: 20px;
+    }
+
+    .empty-state p {
+        color: #888;
+        font-size: 14px;
+    }
+
+    .accion-calificar {
+        text-align: center;
+        margin-top: 40px;
+        padding-top: 30px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-calificar-grande {
+        background: #4CAF50;
+        color: white;
+        padding: 14px 28px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        display: inline-block;
+        border: 2px solid transparent;
+    }
+
+    .btn-calificar-grande:hover {
+        background: transparent;
+        border-color: #4CAF50;
+        color: #4CAF50;
+        text-decoration: none;
+        transform: translateY(-2px);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .calificacion-header {
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        
+        .estrellas-calificacion {
+            align-self: flex-start;
+        }
+        
+        .nivel-estrellas {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        
+        .barra-container {
+            width: 100%;
+            height: 14px;
+        }
+        
+        .calificaciones-header h1 {
+            font-size: 24px;
+        }
+        
+        .puntuacion-numero {
+            font-size: 36px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .calificaciones-container {
+            padding: 15px;
+        }
+        
+        .calificaciones-header {
+            padding: 20px;
+        }
+        
+        .calificacion-card {
+            padding: 15px;
+        }
+        
+        .calificador-info {
+            gap: 10px;
+        }
+        
+        .calificador-avatar {
+            width: 40px;
+            height: 40px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Calcular y animar las barras de progreso
+    function animarBarrasProgreso() {
+        const niveles = document.querySelectorAll('.nivel-estrellas');
+        const totalCalificaciones = {{ estadisticas.total|default:0 }};
+        
+        if (totalCalificaciones === 0) return;
+        
+        niveles.forEach(nivel => {
+            const cantidad = parseInt(nivel.getAttribute('data-cantidad')) || 0;
+            const barra = nivel.querySelector('.barra-progreso');
+            const porcentaje = (cantidad / totalCalificaciones) * 100;
+            
+            // Animar la barra después de un pequeño delay
+            setTimeout(() => {
+                barra.style.width = porcentaje.toFixed(1) + '%';
+            }, 100);
+        });
+    }
+    
+    // Iniciar la animación
+    animarBarrasProgreso();
+    
+    // Efectos hover para las tarjetas de calificación
+    const tarjetasCalificacion = document.querySelectorAll('.calificacion-card');
+    tarjetasCalificacion.forEach(tarjeta => {
+        tarjeta.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-4px)';
+        });
+        
+        tarjeta.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+{% endblock %}

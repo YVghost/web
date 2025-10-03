@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ producto.nombre }} - MarketU{% endblock %}
+
+{% block content %}
+<div class="detalle-container">
+    <!-- Navegación -->
+    <div class="breadcrumb">
+        <a href="{% url 'productos:explorar' %}">← Volver a Explorar</a>
+    </div>
+
+    <!-- Contenedor principal -->
+    <div class="producto-detalle">
+        <!-- Columna izquierda: Galería -->
+        <div class="producto-galeria">
+            <div class="carrusel-container">
+                <div class="carrusel">
+                    {% if producto.imagenes.all %}
+                        {% for imagen in producto.imagenes.all %}
+                        <div class="slide {% if forloop.first %}active{% endif %}" data-index="{{ forloop.counter0 }}">
+                            <img src="{{ imagen.imagen.url }}" alt="{{ producto.nombre }}" class="slide-image">
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="slide active">
+                            <div class="no-imagen-grande">
+                                <span>📦</span>
+                                <p>No hay imagen disponible</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                {% if producto.imagenes.count > 1 %}
+                <div class="carrusel-controls">
+                    <button class="control-btn prev-btn" aria-label="Imagen anterior">‹</button>
+                    <button class="control-btn next-btn" aria-label="Siguiente imagen">›</button>
+                </div>
+
+                <div class="carrusel-indicators">
+                    {% for imagen in producto.imagenes.all %}
+                    <button class="indicator {% if forloop.first %}active{% endif %}" 
+                            data-index="{{ forloop.counter0 }}" 
+                            aria-label="Ir a imagen {{ forloop.counter }}">
+                    </button>
+                    {% endfor %}
+                </div>
+
+                <div class="carrusel-counter">
+                    <span class="current-slide">1</span> / <span class="total-slides">{{ producto.imagenes.count }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if producto.imagenes.count > 1 %}
+            <div class="miniaturas">
+                {% for imagen in producto.imagenes.all %}
+                <div class="miniatura {% if forloop.first %}activa{% endif %}" 
+                     data-index="{{ forloop.counter0 }}">
+                    <img src="{{ imagen.imagen.url }}" alt="{{ producto.nombre }}">
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Columna derecha: Info producto -->
+        <div class="producto-info-detalle">
+            <div class="producto-header">
+                <h1 class="producto-titulo">{{ producto.nombre }}</h1>
+                <div class="producto-precio">${{ producto.precio }}</div>
+                <div class="producto-estado">
+                    <span class="estado-badge {% if producto.estado == 'nuevo' %}estado-nuevo{% else %}estado-usado{% endif %}">
+                        {{ producto.get_estado_display }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="producto-meta">
+                <div class="vendedor-info">
+                    <div class="vendedor-avatar">
+                        {% if producto.vendedor.perfil.avatar %}
+                            <img src="{{ producto.vendedor.perfil.avatar.url }}" alt="{{ producto.vendedor.username }}">
+                        {% else %}
+                            <div class="avatar-placeholder">{{ producto.vendedor.username|first|upper }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="vendedor-datos">
+                        <span class="vendedor-nombre">{{ producto.vendedor.username }}</span>
+                        <div class="vendedor-valoracion">
+                            <span class="estrellas">★★★★★</span>
+                            <span class="puntuacion">(4.8)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="producto-stats">
+                    <div class="stat-item">👁️ {{ producto.vistas }} vistas</div>
+                    <div class="stat-item">❤️ {{ producto.likes.count }} favoritos</div>
+                </div>
+            </div>
+
+            <div class="producto-descripcion">
+                <h3>Descripción</h3>
+                <p>{{ producto.descripcion }}</p>
+            </div>
+
+            <div class="producto-detalles">
+                <h3>Detalles</h3>
+                <div class="detalles-grid">
+                    <div><b>Categoría:</b> {{ producto.categoria.nombre }}</div>
+                    <div><b>Condición:</b> {{ producto.get_estado_display }}</div>
+                    <div><b>Ubicación:</b> {{ producto.ubicacion }}</div>
+                    <div><b>Publicado:</b> {{ producto.fecha_publicacion|date:"d M Y" }}</div>
+                </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="producto-acciones">
+                <!-- Comprar ahora -->
+                <form method="post" action="{% url 'productos:iniciar_checkout' producto.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-comprar" type="submit">🛒 Comprar ahora</button>
+                </form>
+
+                <!-- Favorito -->
+                <a href="{% url 'productos:toggle_favorito' producto.id %}" 
+                   class="btn btn-favorito {% if es_favorito %}favorito-activo{% endif %}">
+                    {% if es_favorito %}❤️ En favoritos{% else %}🤍 Favorito{% endif %}
+                </a>
+            </div>
+
+            <div class="info-adicional">
+                <div class="info-item">🚚 <span>Envío disponible: 3-5 días hábiles</span></div>
+                <div class="info-item">🛡️ <span>Compra protegida: Reembolso garantizado</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .producto-detalle {
+        display: flex;
+        gap: 40px;
+        margin-bottom: 40px;
+    }
+
+    .producto-galeria {
+        flex: 1;
+        max-width: 50%;
+    }
+
+    .producto-info-detalle {
+        flex: 1;
+        max-width: 50%;
+        background: rgba(30, 30, 30, 0.85);
+        border-radius: 12px;
+        padding: 25px;
+        color: #f9fafb;
+    }
+
+    .producto-titulo {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .producto-precio {
+        font-size: 24px;
+        font-weight: 600;
+        color: #38bdf8;
+        margin-bottom: 10px;
+    }
+
+    .producto-estado .estado-badge {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+    .estado-nuevo { background: #bbf7d0; color: #166534; }
+    .estado-usado { background: #fef08a; color: #854d0e; }
+
+    .producto-acciones {
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 12px 18px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: none;
+        transition: 0.3s ease;
+    }
+
+    .btn-comprar {
+        background: #2563eb;
+        color: #fff;
+        width: 100%;
+    }
+    .btn-comprar:hover { background: #1d4ed8; }
+
+    .btn-favorito {
+        background: #f3f4f6;
+        color: #374151;
+    }
+    .btn-favorito:hover { background: #e5e7eb; }
+    .btn-favorito.favorito-activo {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        .producto-detalle {
+            flex-direction: column;
+        }
+        .producto-galeria,
+        .producto-info-detalle {
+            max-width: 100%;
+        }
+    }
+</style>
+{% endblock %}

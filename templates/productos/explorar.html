@@ -1,0 +1,435 @@
+{% extends 'base.html' %}
+
+{% block title %}Explorar Productos - MarketU{% endblock %}
+
+{% block content %}
+<div class="explorar-container">
+    <!-- Banner para usuarios no logueados -->
+    {% if not user.is_authenticated %}
+    <div class="guest-banner">
+        <div class="alert alert-info">
+            <h3>🔒 Acceso Restringido</h3>
+            <p>Para ver los detalles de los productos y contactar a los vendedores, necesitas iniciar sesión.</p>
+            <div class="auth-actions">
+                <a href="{% url 'usuarios:login' %}?next={% url 'productos:explorar' %}" class="btn btn-primary">
+                    Iniciar Sesión
+                </a>
+                <a href="{% url 'usuarios:registro' %}" class="btn btn-secondary">
+                    Crear Cuenta
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Barra de búsqueda y filtros -->
+    <div class="search-filters">
+        <form method="GET" class="search-form">
+            <div class="search-bar">
+                <input type="text" name="q" placeholder="🔍 Buscar productos..." 
+                       value="{{ query }}" class="search-input">
+                <button type="submit" class="search-btn">Buscar</button>
+            </div>
+            
+            <div class="filters">
+                <select name="categoria" class="filter-select">
+                    <option value="">Todas las categorías</option>
+                    {% for categoria in categorias %}
+                    <option value="{{ categoria.id }}" 
+                            {% if categoria_seleccionada == categoria.id|stringformat:"i" %}selected{% endif %}>
+                        {{ categoria.get_nombre_display }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="filter-btn">Filtrar</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Resultados -->
+    <div class="results-header">
+        <h2>
+            {% if titulo %}
+                {{ titulo }}
+            {% else %}
+                {% if query %}
+                    Resultados para "{{ query }}"
+                {% else %}
+                    Todos los Productos
+                {% endif %}
+            {% endif %}
+        </h2>
+        <span class="results-count">{{ productos|length }} producto(s) encontrado(s)</span>
+    </div>
+
+    <!-- Grid de productos -->
+    {% if productos %}
+    <div class="productos-grid">
+        {% for producto in productos %}
+        <div class="producto-card">
+            <div class="producto-image">
+                {% if producto.imagenes.first %}
+                <img src="{{ producto.imagenes.first.imagen.url }}" alt="{{ producto.nombre }}">
+                {% else %}
+                <div class="no-image">📦</div>
+                {% endif %}
+                
+                <!-- Badges -->
+                <div class="producto-badges">
+                    {% if producto.condicion == 'nuevo' %}
+                    <span class="badge nuevo">🆕 Nuevo</span>
+                    {% endif %}
+                    {% if producto.es_multiple %}
+                    <span class="badge multiple">📦 Múltiples</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="producto-info">
+                <h3 class="producto-nombre">{{ producto.nombre }}</h3>
+                <p class="producto-precio">{{ producto.precio_formateado }}</p>
+                <p class="producto-categoria">
+                    {{ producto.categoria.get_nombre_display }}
+                </p>
+                <p class="producto-vendedor">
+                    👤 {{ producto.vendedor.user.get_full_name }}
+                </p>
+                <p class="producto-ubicacion">
+                    📍 {{ producto.ubicacion }}
+                </p>
+                
+                <div class="producto-stats">
+                    <span class="visitas">👁️ {{ producto.visitas }}</span>
+                    <span class="favoritos">❤️ {{ producto.cantidad_favoritos }}</span>
+                </div>
+            </div>
+
+            <div class="producto-actions">
+                {% if user.is_authenticated %}
+                <a href="{% url 'productos:detalle' producto.id %}" class="btn-ver-detalles">
+                    🔍 Ver Detalles
+                </a>
+                {% else %}
+                <a href="{% url 'usuarios:login' %}?next={% url 'productos:detalle' producto.id %}" 
+                   class="btn-login-required">
+                    🔒 Iniciar sesión
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="no-results">
+        <div class="empty-state">
+            <h3>😔 No se encontraron productos</h3>
+            <p>Intenta con otros términos de búsqueda o filtros diferentes.</p>
+            {% if user.is_authenticated %}
+            <a href="{% url 'productos:vender' %}" class="btn btn-primary">
+                🎉 ¡Sé el primero en vender!
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .explorar-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .guest-banner {
+        margin-bottom: 30px;
+    }
+
+    .alert {
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .alert-info {
+        background: rgba(33, 150, 243, 0.1);
+        border: 1px solid rgba(33, 150, 243, 0.3);
+        color: #2196F3;
+    }
+
+    .auth-actions {
+        margin-top: 15px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .search-filters {
+        background: rgba(30, 30, 30, 0.8);
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        backdrop-filter: blur(10px);
+    }
+
+    .search-form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .search-bar {
+        display: flex;
+        gap: 10px;
+    }
+
+    .search-input {
+        flex: 1;
+        padding: 12px 15px;
+        border: 1px solid #444;
+        border-radius: 6px;
+        background: rgba(40, 40, 40, 0.8);
+        color: #fff;
+        font-size: 16px;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #4CAF50;
+    }
+
+    .search-btn, .filter-btn {
+        padding: 12px 20px;
+        background: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+
+    .search-btn:hover, .filter-btn:hover {
+        background: #45a049;
+    }
+
+    .filters {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .filter-select {
+        padding: 10px 15px;
+        border: 1px solid #444;
+        border-radius: 6px;
+        background: rgba(40, 40, 40, 0.8);
+        color: #fff;
+    }
+
+    .results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 0 10px;
+    }
+
+    .results-header h2 {
+        color: #fff;
+        margin: 0;
+    }
+
+    .results-count {
+        color: #888;
+        font-size: 14px;
+    }
+
+    .productos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        padding: 10px 0;
+    }
+
+    .producto-card {
+        background: rgba(30, 30, 30, 0.8);
+        border-radius: 12px;
+        padding: 20px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .producto-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .producto-image {
+        position: relative;
+        height: 200px;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 15px;
+        background: rgba(40, 40, 40, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .producto-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .no-image {
+        font-size: 48px;
+        color: #666;
+    }
+
+    .producto-badges {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .badge.nuevo {
+        background: #4CAF50;
+        color: white;
+    }
+
+    .badge.multiple {
+        background: #2196F3;
+        color: white;
+    }
+
+    .producto-info h3 {
+        color: #fff;
+        margin: 0 0 10px 0;
+        font-size: 18px;
+        line-height: 1.3;
+    }
+
+    .producto-precio {
+        font-size: 24px;
+        font-weight: bold;
+        color: #4CAF50;
+        margin: 0 0 10px 0;
+    }
+
+    .producto-categoria, .producto-vendedor, .producto-ubicacion {
+        color: #ccc;
+        margin: 5px 0;
+        font-size: 14px;
+    }
+
+    .producto-stats {
+        display: flex;
+        gap: 15px;
+        margin-top: 10px;
+        font-size: 12px;
+        color: #888;
+    }
+
+    .producto-actions {
+        margin-top: 15px;
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-ver-detalles, .btn-login-required {
+        flex: 1;
+        padding: 10px 15px;
+        text-align: center;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+
+    .btn-ver-detalles {
+        background: #4CAF50;
+        color: white;
+    }
+
+    .btn-ver-detalles:hover {
+        background: #45a049;
+    }
+
+    .btn-login-required {
+        background: #666;
+        color: #ccc;
+    }
+
+    .btn-login-required:hover {
+        background: #777;
+        color: #fff;
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .empty-state h3 {
+        color: #fff;
+        margin-bottom: 10px;
+    }
+
+    .empty-state p {
+        color: #888;
+        margin-bottom: 20px;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 12px 24px;
+        background: #4CAF50;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        transition: background 0.3s;
+    }
+
+    .btn:hover {
+        background: #45a049;
+    }
+
+    .btn-secondary {
+        background: #666;
+    }
+
+    .btn-secondary:hover {
+        background: #777;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .productos-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .search-bar, .filters {
+            flex-direction: column;
+        }
+        
+        .results-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+    }
+</style>
+{% endblock %}

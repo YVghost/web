@@ -1,0 +1,653 @@
+{% extends 'base.html' %}
+
+{% block title %}Perfil - {{ estudiante.user.get_full_name }} - MarketU{% endblock %}
+
+{% block content %}
+<div class="perfil-container">
+    <!-- Header del perfil -->
+    <div class="perfil-header">
+        <div class="perfil-avatar">
+            {% if estudiante.avatar %}
+            <img src="{{ estudiante.avatar.url }}" alt="Avatar de {{ estudiante.user.get_full_name }}" class="avatar-img">
+            {% else %}
+            <div class="avatar-placeholder">
+                {{ estudiante.user.first_name|first|upper }}{{ estudiante.user.last_name|first|upper }}
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="perfil-info-header">
+            <h1>{{ estudiante.user.get_full_name }}</h1>
+            <p class="perfil-apodo">@{{ estudiante.apodo|default:estudiante.user.username }}</p>
+            <p class="perfil-universidad">{{ estudiante.get_universidad_display }}</p>
+            
+            {% if puede_editar %}
+            <div class="perfil-actions-header">
+                <button class="btn-editar-perfil">✏️ Editar Perfil</button>
+                <a href="{% url 'productos:vender' %}" class="btn-vender">🎉 Vender Producto</a>
+            </div>
+            {% else %}
+            <!-- Opción para calificar al vendedor si no es el perfil propio -->
+            <div class="perfil-actions-header">
+                <a href="{% url 'usuarios:calificar_vendedor' vendedor_id=estudiante.id %}" class="btn-calificar">
+                    ⭐ Calificar Vendedor
+                </a>
+                <a href="{% url 'usuarios:ver_calificaciones' estudiante_id=estudiante.id %}" class="btn-ver-calificaciones">
+                    📊 Ver Calificaciones
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Stats del perfil - ADAPTADO para usar datos reales del modelo -->
+    <div class="perfil-stats">
+        <div class="stat-card">
+            <div class="stat-number">{{ estudiante.calificaciones_recibidas.count }}</div>
+            <div class="stat-label">Calificaciones</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ estudiante.promedio_calificaciones|floatformat:1 }}</div>
+            <div class="stat-label">Rating</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ estudiante.prestigio }}</div>
+            <div class="stat-label">Prestigio</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ estudiante.user.date_joined|date:"Y" }}</div>
+            <div class="stat-label">Miembro desde</div>
+        </div>
+    </div>
+
+    <!-- Calificaciones recientes -->
+    {% if calificaciones_recientes %}
+    <div class="calificaciones-section">
+        <h2>⭐ Calificaciones Recientes</h2>
+        <div class="calificaciones-grid">
+            {% for calificacion in calificaciones_recientes %}
+            <div class="calificacion-card">
+                <div class="calificacion-header">
+                    <div class="calificador-info">
+                        <strong>{{ calificacion.calificador.user.get_full_name }}</strong>
+                        <span class="calificacion-estrellas">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= calificacion.estrellas %}
+                                    ⭐
+                                {% else %}
+                                    ☆
+                                {% endif %}
+                            {% endfor %}
+                        </span>
+                    </div>
+                    <span class="calificacion-fecha">{{ calificacion.fecha_calificacion|date:"d M Y" }}</span>
+                </div>
+                {% if calificacion.comentario %}
+                <div class="calificacion-comentario">
+                    "{{ calificacion.comentario }}"
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% if estudiante.calificaciones_recibidas.count > 5 %}
+        <div class="ver-todas-container">
+            <a href="{% url 'usuarios:ver_calificaciones' estudiante_id=estudiante.id %}" class="btn-ver-todas">
+                Ver todas las calificaciones ({{ estudiante.calificaciones_recibidas.count }})
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Información personal -->
+    <div class="perfil-sections">
+        <!-- Información de contacto -->
+        <div class="info-section">
+            <h2>📱 Información de Contacto</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">📧 Correo Electrónico:</span>
+                    <span class="info-value">{{ estudiante.user.email }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">📞 Teléfono:</span>
+                    <span class="info-value">
+                        {% if estudiante.telefono %}
+                            {{ estudiante.telefono_formateado }}
+                        {% else %}
+                            <span class="no-info">No especificado</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">🏫 Universidad:</span>
+                    <span class="info-value">{{ estudiante.get_universidad_display }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">📅 Miembro desde:</span>
+                    <span class="info-value">{{ estudiante.user.date_joined|date:"d M Y" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información personal -->
+        <div class="info-section">
+            <h2>👤 Información Personal</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">👋 Nombres:</span>
+                    <span class="info-value">{{ estudiante.user.first_name }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">👋 Apellidos:</span>
+                    <span class="info-value">{{ estudiante.user.last_name }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">🎯 Apodo:</span>
+                    <span class="info-value">
+                        {% if estudiante.apodo %}
+                            {{ estudiante.apodo }}
+                        {% else %}
+                            <span class="no-info">No especificado</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">⭐ Prestigio:</span>
+                    <span class="info-value">
+                        {% if estudiante.prestigio > 0 %}
+                            {{ estudiante.prestigio }} puntos
+                        {% else %}
+                            <span class="no-info">Sin calificaciones aún</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bio -->
+        {% if estudiante.bio %}
+        <div class="info-section">
+            <h2>📝 Sobre Mí</h2>
+            <div class="bio-content">
+                {{ estudiante.bio|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Acciones rápidas (solo para perfil propio) -->
+    {% if puede_editar %}
+    <div class="quick-actions">
+        <h2>🚀 Acciones Rápidas</h2>
+        <div class="actions-grid">
+            <a href="{% url 'productos:explorar' %}" class="action-card">
+                <div class="action-icon">🔍</div>
+                <div class="action-title">Explorar Productos</div>
+                <div class="action-description">Descubre productos interesantes</div>
+            </a>
+            
+            <a href="{% url 'productos:vender' %}" class="action-card">
+                <div class="action-icon">🎉</div>
+                <div class="action-title">Vender Producto</div>
+                <div class="action-description">Publica un nuevo producto</div>
+            </a>
+            
+            <a href="{% url 'usuarios:ver_calificaciones' estudiante_id=estudiante.id %}" class="action-card">
+                <div class="action-icon">📊</div>
+                <div class="action-title">Mis Calificaciones</div>
+                <div class="action-description">Revisa tu reputación</div>
+            </a>
+            
+            <div class="action-card" onclick="alert('🔧 Función en desarrollo')">
+                <div class="action-icon">⚙️</div>
+                <div class="action-title">Configuración</div>
+                <div class="action-description">Ajusta tu cuenta</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .perfil-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    /* Header del perfil */
+    .perfil-header {
+        display: flex;
+        align-items: center;
+        gap: 30px;
+        margin-bottom: 30px;
+        padding: 30px;
+        background: rgba(30, 30, 30, 0.8);
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .perfil-avatar {
+        flex-shrink: 0;
+    }
+
+    .avatar-img {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid #4CAF50;
+    }
+
+    .avatar-placeholder {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4CAF50, #45a049);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        font-weight: bold;
+        color: white;
+        border: 4px solid #4CAF50;
+    }
+
+    .perfil-info-header {
+        flex: 1;
+    }
+
+    .perfil-info-header h1 {
+        color: #fff;
+        font-size: 32px;
+        margin: 0 0 5px 0;
+    }
+
+    .perfil-apodo {
+        color: #4CAF50;
+        font-size: 18px;
+        margin: 0 0 10px 0;
+        font-weight: 500;
+    }
+
+    .perfil-universidad {
+        color: #ccc;
+        font-size: 16px;
+        margin: 0 0 20px 0;
+    }
+
+    .perfil-actions-header {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .btn-editar-perfil, .btn-vender, .btn-calificar, .btn-ver-calificaciones {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 14px;
+    }
+
+    .btn-editar-perfil {
+        background: transparent;
+        border: 2px solid #4CAF50;
+        color: #4CAF50;
+    }
+
+    .btn-editar-perfil:hover {
+        background: #4CAF50;
+        color: white;
+    }
+
+    .btn-vender, .btn-calificar {
+        background: #4CAF50;
+        color: white;
+    }
+
+    .btn-vender:hover, .btn-calificar:hover {
+        background: #45a049;
+    }
+
+    .btn-ver-calificaciones {
+        background: transparent;
+        border: 2px solid #2196F3;
+        color: #2196F3;
+    }
+
+    .btn-ver-calificaciones:hover {
+        background: #2196F3;
+        color: white;
+    }
+
+    /* Stats del perfil */
+    .perfil-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: rgba(30, 30, 30, 0.8);
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: transform 0.3s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .stat-number {
+        font-size: 32px;
+        font-weight: bold;
+        color: #4CAF50;
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        color: #ccc;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Sección de calificaciones */
+    .calificaciones-section {
+        margin-bottom: 30px;
+    }
+
+    .calificaciones-section h2 {
+        color: #fff;
+        margin-bottom: 20px;
+        font-size: 24px;
+    }
+
+    .calificaciones-grid {
+        display: grid;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .calificacion-card {
+        background: rgba(30, 30, 30, 0.8);
+        padding: 20px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .calificacion-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .calificador-info {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .calificador-info strong {
+        color: #fff;
+    }
+
+    .calificacion-estrellas {
+        color: #FFD700;
+    }
+
+    .calificacion-fecha {
+        color: #888;
+        font-size: 12px;
+    }
+
+    .calificacion-comentario {
+        color: #ccc;
+        font-style: italic;
+        padding: 10px;
+        background: rgba(40, 40, 40, 0.6);
+        border-radius: 6px;
+        border-left: 3px solid #4CAF50;
+    }
+
+    .ver-todas-container {
+        text-align: center;
+    }
+
+    .btn-ver-todas {
+        background: transparent;
+        border: 2px solid #2196F3;
+        color: #2196F3;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .btn-ver-todas:hover {
+        background: #2196F3;
+        color: white;
+        text-decoration: none;
+    }
+
+    /* Secciones de información */
+    .perfil-sections {
+        display: grid;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .info-section {
+        background: rgba(30, 30, 30, 0.8);
+        padding: 25px;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .info-section h2 {
+        color: #fff;
+        margin: 0 0 20px 0;
+        font-size: 20px;
+        border-bottom: 2px solid #4CAF50;
+        padding-bottom: 10px;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 15px;
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        color: #ccc;
+        font-weight: 500;
+    }
+
+    .info-value {
+        color: #fff;
+        text-align: right;
+    }
+
+    .no-info {
+        color: #888;
+        font-style: italic;
+    }
+
+    .bio-content {
+        color: #ccc;
+        line-height: 1.6;
+        background: rgba(40, 40, 40, 0.6);
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #4CAF50;
+    }
+
+    /* Acciones rápidas */
+    .quick-actions {
+        margin-bottom: 30px;
+    }
+
+    .quick-actions h2 {
+        color: #fff;
+        margin-bottom: 20px;
+        font-size: 24px;
+    }
+
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+
+    .action-card {
+        background: rgba(30, 30, 30, 0.8);
+        padding: 25px;
+        border-radius: 12px;
+        text-align: center;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        cursor: pointer;
+    }
+
+    .action-card:hover {
+        transform: translateY(-5px);
+        background: rgba(40, 40, 40, 0.9);
+        text-decoration: none;
+        color: inherit;
+        border-color: #4CAF50;
+    }
+
+    .action-icon {
+        font-size: 40px;
+        margin-bottom: 15px;
+    }
+
+    .action-title {
+        color: #fff;
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .action-description {
+        color: #888;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .perfil-header {
+            flex-direction: column;
+            text-align: center;
+            gap: 20px;
+        }
+
+        .perfil-actions-header {
+            justify-content: center;
+        }
+
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .actions-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .perfil-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .calificacion-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .perfil-stats {
+            grid-template-columns: 1fr;
+        }
+        
+        .info-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+        }
+        
+        .info-value {
+            text-align: left;
+        }
+
+        .perfil-actions-header {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .btn-editar-perfil, .btn-vender, .btn-calificar, .btn-ver-calificaciones {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Función para editar perfil (placeholder)
+        const btnEditar = document.querySelector('.btn-editar-perfil');
+        if (btnEditar) {
+            btnEditar.addEventListener('click', function() {
+                alert('🔧 Función de edición de perfil en desarrollo');
+            });
+        }
+
+        // Efectos hover mejorados
+        const actionCards = document.querySelectorAll('.action-card');
+        actionCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    });
+</script>
+{% endblock %}

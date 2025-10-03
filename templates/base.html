@@ -203,25 +203,31 @@
     
     <!-- Header con navegación -->
     <header>
-        <a href="{% url 'explorar' %}" class="logo">Market<span>U</span></a>
+        <a href="{% url 'productos:explorar' %}" class="logo">Market<span>U</span></a>
         
         <nav>
             <ul class="nav-links">
                 {% if user.is_authenticated %}
-                    <li><a href="{% url 'explorar' %}">Explorar</a></li>
-                    <li><a href="{% url 'vender' %}">Vender</a></li>
+                    <!-- Usuario logueado: Ver Explorar, Vender y Mis Productos -->
+                    <li><a href="{% url 'productos:explorar' %}">Explorar</a></li>
+                    <li><a href="{% url 'productos:vender' %}">Vender</a></li>
+                    <li><a href="{% url 'productos:mis_productos' %}">Mis Productos</a></li>
+                    <li><a href="{% url 'productos:mis_favoritos' %}">Favoritos</a></li>
                 {% else %}
-                    <li><a href="{% url 'explorar' %}">Explorar</a></li>
+                    <!-- Usuario NO logueado: Solo puede ver Explorar -->
+                    <li><a href="{% url 'productos:explorar' %}">Explorar</a></li>
                 {% endif %}
             </ul>
             
             <div class="auth-links">
                 {% if user.is_authenticated %}
-                    <a href="{% url 'perfil' %}">Perfil</a>
-                    <a href="{% url 'logout' %}" class="btn">Cerrar Sesión</a>
+                    <!-- Usuario logueado: Ver Perfil y Cerrar Sesión -->
+                    <a href="{% url 'usuarios:perfil' %}">Perfil</a>
+                    <a href="{% url 'usuarios:logout' %}" class="btn">Cerrar Sesión</a>
                 {% else %}
-                    <a href="{% url 'login' %}">Iniciar Sesión</a>
-                    <a href="{% url 'registro' %}" class="btn">Registrarse</a>
+                    <!-- Usuario NO logueado: Ver Login y Registro -->
+                    <a href="{% url 'usuarios:login' %}">Iniciar Sesión</a>
+                    <a href="{% url 'usuarios:registro' %}" class="btn">Registrarse</a>
                 {% endif %}
             </div>
         </nav>
@@ -245,9 +251,12 @@
             <div class="footer-section">
                 <h3>Enlaces Rápidos</h3>
                 <ul>
-                    <li><a href="{% url 'explorar' %}">Inicio</a></li>
-                    <li><a href="{% url 'explorar' %}">Explorar</a></li>
-                    <li><a href="{% url 'vender' %}">Vender</a></li>
+                    <li><a href="{% url 'productos:explorar' %}">Inicio</a></li>
+                    <li><a href="{% url 'productos:explorar' %}">Explorar</a></li>
+                    {% if user.is_authenticated %}
+                        <li><a href="{% url 'productos:vender' %}">Vender</a></li>
+                        <li><a href="{% url 'productos:mis_productos' %}">Mis Productos</a></li>
+                    {% endif %}
                 </ul>
             </div>
             
