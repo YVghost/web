@@ -110,7 +110,7 @@
                     🔍 Ver Detalles
                 </a>
                 {% else %}
-                <a href="{% url 'login' %}?next={% url 'productos:detalle' producto.id %}" 
+                <a href="{% url 'usuarios:login' %}?next={% url 'productos:detalle' producto.id %}" 
                    class="btn-login-required">
                     🔒 Iniciar sesión
                 </a>

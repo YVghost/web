@@ -14,5 +14,6 @@ urlpatterns = [
     path('categoria/<int:categoria_id>/', views.productos_por_categoria, name='por_categoria'),
     path('<int:producto_id>/editar/', login_required(views.editar_producto), name='editar'),
     path('<int:producto_id>/eliminar/', login_required(views.eliminar_producto), name='eliminar'),
+    path("iniciar/<int:producto_id>/", login_required(views.iniciar_checkout), name="iniciar_checkout"),
     #path('<int:producto_id>/cambiar-estado/', login_required(views.cambiar_estado_producto), name='cambiar_estado'),
 ]

@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout - {{ producto.nombre }}{% endblock %}
+
+{% block content %}
+<div class="checkout-container">
+    <h1>🛒 Confirmar compra</h1>
+    
+    <div class="checkout-card">
+        <div class="checkout-producto">
+            {% if producto.imagenes.first %}
+                <img src="{{ producto.imagenes.first.imagen.url }}" alt="{{ producto.nombre }}">
+            {% else %}
+                <div class="img-placeholder">📦</div>
+            {% endif %}
+            <div class="producto-info">
+                <h2>{{ producto.nombre }}</h2>
+                <p class="precio">Precio: ${{ producto.precio }}</p>
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-comprar">✅ Confirmar compra</button>
+            <a href="{% url 'productos:detalle' producto.id %}" class="btn btn-cancelar">❌ Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.checkout-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 20px;
+    text-align: center;
+}
+
+.checkout-card {
+    background: rgba(30, 30, 30, 0.85);
+    border-radius: 12px;
+    padding: 20px;
+    color: #f9fafb;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.checkout-producto {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.checkout-producto img {
+    width: 100px;
+    border-radius: 8px;
+}
+
+.img-placeholder {
+    width: 100px;
+    height: 100px;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+.producto-info h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.precio {
+    font-size: 18px;
+    color: #38bdf8;
+}
+
+.btn {
+    display: inline-block;
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    margin: 5px;
+    transition: 0.3s ease;
+}
+
+.btn-comprar {
+    background: #22c55e;
+    color: white;
+}
+.btn-comprar:hover { background: #16a34a; }
+
+.btn-cancelar {
+    background: #f3f4f6;
+    color: #374151;
+}
+.btn-cancelar:hover { background: #e5e7eb; }
+</style>
+{% endblock %}
