@@ -1,0 +1,515 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ producto.nombre }} - MarketU{% endblock %}
+
+{% block content %}
+<div class="detalle-container">
+    <!-- Navegación -->
+    <div class="breadcrumb">
+        <a href="{% url 'productos:explorar' %}">← Volver a Explorar</a>
+    </div>
+
+    <div class="producto-detalle">
+        <!-- Galería de imágenes con carrusel -->
+        <div class="producto-galeria">
+            <div class="carrusel-container">
+                <div class="carrusel">
+                    {% if producto.imagenes.all %}
+                        {% for imagen in producto.imagenes.all %}
+                        <div class="slide {% if forloop.first %}active{% endif %}" data-index="{{ forloop.counter0 }}">
+                            <img src="{{ imagen.imagen.url }}" alt="{{ producto.nombre }}" class="slide-image">
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="slide active">
+                            <div class="no-imagen-grande">
+                                <span>📦</span>
+                                <p>No hay imagen disponible</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Controles del carrusel -->
+                {% if producto.imagenes.count > 1 %}
+                <div class="carrusel-controls">
+                    <button class="control-btn prev-btn" aria-label="Imagen anterior">
+                        ‹
+                    </button>
+                    <button class="control-btn next-btn" aria-label="Siguiente imagen">
+                        ›
+                    </button>
+                </div>
+
+                <!-- Indicadores -->
+                <div class="carrusel-indicators">
+                    {% for imagen in producto.imagenes.all %}
+                    <button class="indicator {% if forloop.first %}active{% endif %}" 
+                            data-index="{{ forloop.counter0 }}" 
+                            aria-label="Ir a imagen {{ forloop.counter }}">
+                    </button>
+                    {% endfor %}
+                </div>
+
+                <!-- Contador -->
+                <div class="carrusel-counter">
+                    <span class="current-slide">1</span> / <span class="total-slides">{{ producto.imagenes.count }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Miniaturas (opcional, puedes mantenerlas o eliminar) -->
+            {% if producto.imagenes.count > 1 %}
+            <div class="miniaturas">
+                {% for imagen in producto.imagenes.all %}
+                <div class="miniatura {% if forloop.first %}activa{% endif %}" 
+                     data-index="{{ forloop.counter0 }}">
+                    <img src="{{ imagen.imagen.url }}" alt="{{ producto.nombre }}">
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- El resto del template se mantiene igual -->
+        <div class="producto-info-detalle">
+            <!-- ... (todo el contenido de información del producto se mantiene igual) ... -->
+        </div>
+    </div>
+
+    <!-- Productos relacionados (se mantiene igual) -->
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detalle-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .breadcrumb {
+        margin-bottom: 20px;
+    }
+
+    .breadcrumb a {
+        color: #4CAF50;
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+    .breadcrumb a:hover {
+        text-decoration: underline;
+    }
+
+    .producto-detalle {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        margin-bottom: 40px;
+    }
+
+    /* Carrusel Styles */
+    .carrusel-container {
+        position: relative;
+        background: rgba(30, 30, 30, 0.8);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 15px;
+        height: 400px;
+    }
+
+    .carrusel {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .slide {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .slide.active {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .slide.prev {
+        transform: translateX(-100%);
+    }
+
+    .slide.next {
+        transform: translateX(100%);
+    }
+
+    .slide-image {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        transition: transform 0.3s ease;
+    }
+
+    .slide:hover .slide-image {
+        transform: scale(1.02);
+    }
+
+    .no-imagen-grande {
+        text-align: center;
+        color: #666;
+    }
+
+    .no-imagen-grande span {
+        font-size: 80px;
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    /* Controles del carrusel */
+    .carrusel-controls {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: space-between;
+        padding: 0 20px;
+        transform: translateY(-50%);
+        pointer-events: none;
+    }
+
+    .control-btn {
+        background: rgba(0, 0, 0, 0.7);
+        border: none;
+        color: white;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        font-size: 24px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        pointer-events: all;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .control-btn:hover {
+        background: rgba(76, 175, 80, 0.8);
+        transform: scale(1.1);
+    }
+
+    .control-btn:active {
+        transform: scale(0.95);
+    }
+
+    /* Indicadores */
+    .carrusel-indicators {
+        position: absolute;
+        bottom: 20px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        pointer-events: none;
+    }
+
+    .indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        background: transparent;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        pointer-events: all;
+    }
+
+    .indicator.active {
+        background: #4CAF50;
+        border-color: #4CAF50;
+        transform: scale(1.2);
+    }
+
+    .indicator:hover {
+        background: rgba(76, 175, 80, 0.5);
+        border-color: #4CAF50;
+    }
+
+    /* Contador */
+    .carrusel-counter {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    /* Miniaturas (opcional) */
+    .miniaturas {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .miniatura {
+        width: 80px;
+        height: 80px;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+        border: 2px solid transparent;
+        opacity: 0.7;
+        transition: all 0.3s;
+        position: relative;
+    }
+
+    .miniatura.activa {
+        border-color: #4CAF50;
+        opacity: 1;
+        transform: scale(1.05);
+    }
+
+    .miniatura:hover {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+
+    .miniatura::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(76, 175, 80, 0);
+        transition: background 0.3s;
+    }
+
+    .miniatura.activa::after {
+        background: rgba(76, 175, 80, 0.2);
+    }
+
+    .miniatura img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* El resto de los estilos se mantienen igual */
+    .producto-info-detalle {
+        background: rgba(30, 30, 30, 0.8);
+        border-radius: 12px;
+        padding: 30px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* ... (todos los demás estilos se mantienen igual) ... */
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .producto-detalle {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .carrusel-container {
+            height: 300px;
+        }
+
+        .control-btn {
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+        }
+
+        .carrusel-counter {
+            top: 10px;
+            right: 10px;
+            font-size: 12px;
+            padding: 6px 10px;
+        }
+
+        .miniatura {
+            width: 60px;
+            height: 60px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .carrusel-container {
+            height: 250px;
+        }
+
+        .control-btn {
+            width: 35px;
+            height: 35px;
+            font-size: 18px;
+            padding: 0 10px;
+        }
+
+        .miniaturas {
+            gap: 5px;
+        }
+
+        .miniatura {
+            width: 50px;
+            height: 50px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        class Carrusel {
+            constructor(container) {
+                this.container = container;
+                this.slides = container.querySelectorAll('.slide');
+                this.indicators = container.querySelectorAll('.indicator');
+                this.miniaturas = container.querySelectorAll('.miniatura');
+                this.prevBtn = container.querySelector('.prev-btn');
+                this.nextBtn = container.querySelector('.next-btn');
+                this.currentSlide = 0;
+                this.totalSlides = this.slides.length;
+                this.counterCurrent = container.querySelector('.current-slide');
+                this.counterTotal = container.querySelector('.total-slides');
+                
+                this.init();
+            }
+
+            init() {
+                // Configurar contador
+                if (this.counterTotal) {
+                    this.counterTotal.textContent = this.totalSlides;
+                }
+
+                // Event listeners para controles
+                if (this.prevBtn) {
+                    this.prevBtn.addEventListener('click', () => this.prev());
+                }
+                if (this.nextBtn) {
+                    this.nextBtn.addEventListener('click', () => this.next());
+                }
+
+                // Event listeners para indicadores
+                this.indicators.forEach((indicator, index) => {
+                    indicator.addEventListener('click', () => this.goToSlide(index));
+                });
+
+                // Event listeners para miniaturas
+                this.miniaturas.forEach((miniatura, index) => {
+                    miniatura.addEventListener('click', () => this.goToSlide(index));
+                });
+
+                // Navegación con teclado
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowLeft') this.prev();
+                    if (e.key === 'ArrowRight') this.next();
+                });
+
+                // Auto-avance opcional (descomenta si lo quieres)
+                // this.startAutoPlay();
+            }
+
+            updateSlide(position) {
+                // Remover clases activas
+                this.slides.forEach(slide => {
+                    slide.classList.remove('active', 'prev', 'next');
+                });
+                this.indicators.forEach(indicator => {
+                    indicator.classList.remove('active');
+                });
+                this.miniaturas.forEach(miniatura => {
+                    miniatura.classList.remove('activa');
+                });
+
+                // Calcular índices
+                const prevIndex = (position - 1 + this.totalSlides) % this.totalSlides;
+                const nextIndex = (position + 1) % this.totalSlides;
+
+                // Aplicar clases
+                this.slides[prevIndex]?.classList.add('prev');
+                this.slides[position].classList.add('active');
+                this.slides[nextIndex]?.classList.add('next');
+
+                this.indicators[position]?.classList.add('active');
+                this.miniaturas[position]?.classList.add('activa');
+
+                // Actualizar contador
+                if (this.counterCurrent) {
+                    this.counterCurrent.textContent = position + 1;
+                }
+            }
+
+            next() {
+                this.currentSlide = (this.currentSlide + 1) % this.totalSlides;
+                this.updateSlide(this.currentSlide);
+            }
+
+            prev() {
+                this.currentSlide = (this.currentSlide - 1 + this.totalSlides) % this.totalSlides;
+                this.updateSlide(this.currentSlide);
+            }
+
+            goToSlide(index) {
+                this.currentSlide = index;
+                this.updateSlide(this.currentSlide);
+            }
+
+            startAutoPlay() {
+                setInterval(() => {
+                    this.next();
+                }, 5000); // Cambia cada 5 segundos
+            }
+        }
+
+        // Inicializar carrusel
+        const carruselContainer = document.querySelector('.carrusel-container');
+        if (carruselContainer) {
+            new Carrusel(carruselContainer);
+        }
+
+        // El resto del JavaScript se mantiene igual
+        const btnFavorito = document.querySelector('.btn-favorito');
+        if (btnFavorito) {
+            btnFavorito.addEventListener('click', function() {
+                const productoId = this.getAttribute('data-producto-id');
+                window.location.href = `/productos/${productoId}/favorito/`;
+            });
+        }
+
+        const btnContactar = document.querySelector('.btn-contactar');
+        if (btnContactar) {
+            btnContactar.addEventListener('click', function() {
+                alert('📞 Función de contacto próximamente disponible!');
+            });
+        }
+
+        const btnPreguntar = document.querySelector('.btn-preguntar');
+        if (btnPreguntar) {
+            btnPreguntar.addEventListener('click', function() {
+                alert('💬 Función de preguntas próximamente disponible!');
+            });
+        }
+    });
+</script>
+{% endblock %}

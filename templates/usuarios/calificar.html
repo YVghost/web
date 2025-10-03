@@ -1,0 +1,433 @@
+{% extends 'base.html' %}
+
+{% block title %}Calificar a {{ vendedor.user.get_full_name }} - MarketU{% endblock %}
+
+{% block content %}
+<div class="calificar-container">
+    <div class="calificar-form">
+        <div class="calificar-header">
+            <a href="{% url 'usuarios:perfil_con_id' id=vendedor.id %}" class="back-link">← Volver al perfil</a>
+            <h1>⭐ Calificar a {{ vendedor.user.get_full_name }}</h1>
+            <p class="subtitle">Comparte tu experiencia con este vendedor</p>
+        </div>
+
+        {% if calificacion_existente %}
+        <div class="alert alert-info">
+            <p>📝 Ya has calificado a este vendedor anteriormente. Puedes actualizar tu calificación.</p>
+        </div>
+        {% endif %}
+
+        {% if form.errors %}
+        <div class="alert alert-error">
+            {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                    <p><strong>{{ field|title }}:</strong> {{ error }}</p>
+                {% endfor %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="POST" class="form">
+            {% csrf_token %}
+            
+            <!-- Estrellas -->
+            <div class="form-group">
+                <label class="estrellas-label">Calificación con Estrellas</label>
+                <div class="estrellas-container">
+                    {% for value, text in form.estrellas.field.choices %}
+                    <div class="estrella-option">
+                        <input type="radio" name="estrellas" id="estrella{{ value }}" value="{{ value }}" 
+                               {% if form.estrellas.value == value|stringformat:"i" %}checked{% endif %}
+                               class="estrella-input">
+                        <label for="estrella{{ value }}" class="estrella-label">
+                            <span class="estrella-text">{{ text }}</span>
+                            <span class="estrella-emoji">
+                                {% if value == 1 %}⭐
+                                {% elif value == 2 %}⭐⭐
+                                {% elif value == 3 %}⭐⭐⭐
+                                {% elif value == 4 %}⭐⭐⭐⭐
+                                {% elif value == 5 %}⭐⭐⭐⭐⭐
+                                {% endif %}
+                            </span>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Comentario -->
+            <div class="form-group">
+                <label for="{{ form.comentario.id_for_label }}">Comentario (Opcional)</label>
+                {{ form.comentario }}
+                <small class="help-text">Comparte tu experiencia con este vendedor. ¿Cómo fue la comunicación? ¿El producto cumplió con lo esperado?</small>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-calificar">
+                    {% if calificacion_existente %}
+                    ✏️ Actualizar Calificación
+                    {% else %}
+                    ⭐ Enviar Calificación
+                    {% endif %}
+                </button>
+                <a href="{% url 'usuarios:perfil_con_id' id=vendedor.id %}" class="btn-cancelar">Cancelar</a>
+            </div>
+        </form>
+
+        <!-- Guía de calificación -->
+        <div class="guia-calificacion">
+            <h3>💡 ¿Cómo calificar?</h3>
+            <div class="guia-items">
+                <div class="guia-item">
+                    <span class="guia-estrellas">⭐⭐⭐⭐⭐</span>
+                    <span class="guia-descripcion">Excelente - Superó mis expectativas</span>
+                </div>
+                <div class="guia-item">
+                    <span class="guia-estrellas">⭐⭐⭐⭐</span>
+                    <span class="guia-descripcion">Muy bueno - Cumplió con lo esperado</span>
+                </div>
+                <div class="guia-item">
+                    <span class="guia-estrellas">⭐⭐⭐</span>
+                    <span class="guia-descripcion">Bueno - Experiencia satisfactoria</span>
+                </div>
+                <div class="guia-item">
+                    <span class="guia-estrellas">⭐⭐</span>
+                    <span class="guia-descripcion">Regular - Podría mejorar</span>
+                </div>
+                <div class="guia-item">
+                    <span class="guia-estrellas">⭐</span>
+                    <span class="guia-descripcion">Malo - No cumplió expectativas</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calificar-container {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 80vh;
+        padding: 40px 20px;
+    }
+    
+    .calificar-form {
+        background: rgba(30, 30, 30, 0.9);
+        backdrop-filter: blur(10px);
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        width: 100%;
+        max-width: 600px;
+    }
+    
+    .back-link {
+        color: #4CAF50;
+        text-decoration: none;
+        font-size: 14px;
+        margin-bottom: 20px;
+        display: inline-block;
+    }
+    
+    .back-link:hover {
+        text-decoration: underline;
+    }
+    
+    .calificar-header h1 {
+        color: #fff;
+        margin-bottom: 10px;
+        font-size: 28px;
+    }
+    
+    .subtitle {
+        color: #ccc;
+        margin-bottom: 30px;
+        font-size: 16px;
+    }
+    
+    .alert {
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+        font-size: 14px;
+    }
+    
+    .alert-info {
+        background: rgba(33, 150, 243, 0.1);
+        border: 1px solid rgba(33, 150, 243, 0.3);
+        color: #2196F3;
+    }
+    
+    .alert-error {
+        background: rgba(244, 67, 54, 0.1);
+        border: 1px solid rgba(244, 67, 54, 0.3);
+        color: #f44336;
+    }
+    
+    .form-group {
+        margin-bottom: 30px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 15px;
+        color: #fff;
+        font-weight: 600;
+        font-size: 18px;
+    }
+    
+    .estrellas-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .estrella-option {
+        display: flex;
+        align-items: center;
+    }
+    
+    .estrella-input {
+        display: none;
+    }
+    
+    .estrella-label {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 12px 20px;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex: 1;
+    }
+    
+    .estrella-input:checked + .estrella-label {
+        border-color: #4CAF50;
+        background: rgba(76, 175, 80, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .estrella-label:hover {
+        border-color: #4CAF50;
+        background: rgba(76, 175, 80, 0.05);
+    }
+    
+    .estrella-text {
+        color: #fff;
+        font-weight: 500;
+        flex: 1;
+    }
+    
+    .estrella-emoji {
+        font-size: 18px;
+        color: #FFD700;
+    }
+    
+    textarea.form-control {
+        width: 100%;
+        padding: 15px;
+        border: 1px solid #444;
+        border-radius: 8px;
+        background: rgba(40, 40, 40, 0.8);
+        color: #fff;
+        font-size: 16px;
+        font-family: inherit;
+        resize: vertical;
+        min-height: 120px;
+        transition: all 0.3s ease;
+    }
+    
+    textarea.form-control:focus {
+        outline: none;
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+    }
+    
+    .help-text {
+        display: block;
+        margin-top: 8px;
+        color: #888;
+        font-size: 13px;
+        line-height: 1.4;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+    }
+    
+    .btn-calificar {
+        flex: 2;
+        padding: 15px;
+        background: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-calificar:hover {
+        background: #45a049;
+        transform: translateY(-2px);
+    }
+    
+    .btn-cancelar {
+        flex: 1;
+        padding: 15px;
+        background: transparent;
+        color: #ccc;
+        border: 2px solid #444;
+        border-radius: 8px;
+        text-decoration: none;
+        text-align: center;
+        font-size: 16px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-cancelar:hover {
+        border-color: #666;
+        color: #fff;
+        text-decoration: none;
+    }
+    
+    .guia-calificacion {
+        margin-top: 40px;
+        padding-top: 30px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .guia-calificacion h3 {
+        color: #fff;
+        margin-bottom: 20px;
+        font-size: 18px;
+    }
+    
+    .guia-items {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .guia-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 8px 0;
+    }
+    
+    .guia-estrellas {
+        width: 80px;
+        color: #FFD700;
+        font-size: 14px;
+    }
+    
+    .guia-descripcion {
+        color: #ccc;
+        font-size: 14px;
+        flex: 1;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .calificar-form {
+            padding: 30px 20px;
+            margin: 20px;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .estrella-label {
+            padding: 10px 15px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .calificar-container {
+            padding: 20px 10px;
+        }
+        
+        .calificar-form {
+            padding: 25px 15px;
+        }
+        
+        .calificar-header h1 {
+            font-size: 24px;
+        }
+        
+        .guia-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+        }
+        
+        .guia-estrellas {
+            width: auto;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Efectos para las opciones de estrellas
+        const estrellaLabels = document.querySelectorAll('.estrella-label');
+        
+        estrellaLabels.forEach(label => {
+            label.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+            });
+            
+            label.addEventListener('mouseleave', function() {
+                const input = this.previousElementSibling;
+                if (!input.checked) {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = 'none';
+                }
+            });
+        });
+        
+        // Contador de caracteres para el comentario
+        const comentarioTextarea = document.querySelector('textarea[name="comentario"]');
+        if (comentarioTextarea) {
+            const contador = document.createElement('div');
+            contador.className = 'contador-caracteres';
+            contador.style.marginTop = '8px';
+            contador.style.fontSize = '12px';
+            contador.style.color = '#888';
+            contador.style.textAlign = 'right';
+            
+            comentarioTextarea.parentNode.appendChild(contador);
+            
+            function actualizarContador() {
+                const longitud = comentarioTextarea.value.length;
+                const maximo = 500;
+                contador.textContent = `${longitud}/${maximo} caracteres`;
+                
+                if (longitud > maximo * 0.8) {
+                    contador.style.color = '#ff9800';
+                } else {
+                    contador.style.color = '#888';
+                }
+            }
+            
+            comentarioTextarea.addEventListener('input', actualizarContador);
+            actualizarContador(); // Inicializar
+        }
+    });
+</script>
+{% endblock %}

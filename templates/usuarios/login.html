@@ -32,7 +32,7 @@
                        placeholder="Ingresa tu contraseña"
                        class="form-input">
                 <div class="password-actions">
-                    <a href="{% url 'password_reset' %}" class="link">¿Olvidaste tu contraseña?</a>
+                    <a href="{% url 'usuarios:password_reset' %}" class="link">¿Olvidaste tu contraseña?</a>
                 </div>
             </div>
             
@@ -45,7 +45,7 @@
         </form>
         
         <div class="register-link">
-            <p>¿No tienes una cuenta? <a href="{% url 'registro' %}" class="link">Regístrate aquí</a></p>
+            <p>¿No tienes una cuenta? <a href="{% url 'usuarios:registro' %}" class="link">Regístrate aquí</a></p>
         </div>
     </div>
 </div>

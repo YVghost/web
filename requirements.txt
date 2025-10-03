@@ -2,3 +2,4 @@ django
 dotenv
 mysqlclient
 Pillow
+django-imagekit 

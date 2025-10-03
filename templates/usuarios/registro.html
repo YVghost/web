@@ -12,13 +12,13 @@
         <div class="alert alert-error">
             {% for field, errors in form.errors.items %}
                 {% for error in errors %}
-                    <p>{{ error }}</p>
+                    <p><strong>{{ field|title }}:</strong> {{ error }}</p>
                 {% endfor %}
             {% endfor %}
         </div>
         {% endif %}
         
-        <form method="POST" class="form">
+        <form method="POST" class="form" id="registroForm">
             {% csrf_token %}
             
             <div class="form-row">
@@ -36,11 +36,19 @@
             <div class="form-group">
                 <label for="{{ form.apodo.id_for_label }}">Apodo (Opcional)</label>
                 {{ form.apodo }}
+                <small class="help-text">Como quieres que te llamen en la plataforma</small>
             </div>
             
             <div class="form-group">
                 <label for="{{ form.correo.id_for_label }}">Correo Universitario *</label>
                 {{ form.correo }}
+                <small class="help-text">Usa tu correo institucional</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.telefono.id_for_label }}">Teléfono Celular</label>
+                {{ form.telefono }}
+                <small class="help-text">{{ form.telefono.help_text }}</small>
             </div>
             
             <div class="form-group">
@@ -75,7 +83,7 @@
         </form>
         
         <div class="login-link">
-            <p>¿Ya tienes una cuenta? <a href="{% url 'login' %}" class="link">Inicia Sesión</a></p>
+            <p>¿Ya tienes una cuenta? <a href="{% url 'usuarios:login' %}" class="link">Inicia Sesión</a></p>
         </div>
     </div>
 </div>
@@ -166,6 +174,13 @@
     }
     
     .form-group input::placeholder {
+        color: #888;
+    }
+    
+    .help-text {
+        display: block;
+        margin-top: 5px;
+        font-size: 12px;
         color: #888;
     }
     
@@ -275,4 +290,42 @@
         }
     }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const telefonoInput = document.getElementById('{{ form.telefono.id_for_label }}');
+        
+        // Formateo automático del teléfono
+        telefonoInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            
+            if (value.startsWith('593')) {
+                value = '+' + value;
+            } else if (value.length > 0 && !value.startsWith('593')) {
+                value = '+593' + value;
+            }
+            
+            // Limitar longitud
+            if (value.length > 13) {
+                value = value.substring(0, 13);
+            }
+            
+            e.target.value = value;
+        });
+        
+        // Validación en tiempo real
+        telefonoInput.addEventListener('blur', function() {
+            const value = this.value;
+            if (value && !/^\+593\d{8,9}$/.test(value)) {
+                this.style.borderColor = '#f44336';
+                this.style.boxShadow = '0 0 0 2px rgba(244, 67, 54, 0.2)';
+            } else {
+                this.style.borderColor = '#4CAF50';
+                this.style.boxShadow = '0 0 0 2px rgba(76, 175, 80, 0.2)';
+            }
+        });
+    });
+</script>
 {% endblock %}
