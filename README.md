@@ -47,5 +47,4 @@ Se implementa **protección de rutas**, garantizando que solo los usuarios auten
 
 ## Conclusión
 
-Este proyecto demuestra cómo construir una aplicación web **segura, funcional y estéticamente moderna** utilizando Django y Bootstrap, y cómo desplegarla de manera gratuita en **Render.com**.  
-Aprenderás conceptos clave de **autenticación, CRUD, protección de rutas y despliegue en producción**, aplicables a cualquier proyecto web.
+Este proyecto demuestra cómo construir una aplicación web **segura, funcional y estéticamente moderna** utilizando Django y Bootstrap, y cómo desplegarla de manera facil, addemas aprenderas conceptos clave de **autenticación, CRUD, protección de rutas y despliegue en producción**, aplicables a cualquier proyecto web.
