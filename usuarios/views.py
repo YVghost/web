@@ -13,7 +13,7 @@ def registro(request):
         if form.is_valid():
             estudiante = form.save()
             
-            # Autenticar automáticamente al usuario
+            # Autenticar automáticamente al usuari
             user = authenticate(
                 username=form.cleaned_data['correo'],
                 password=form.cleaned_data['password1']
@@ -35,7 +35,6 @@ def login_estudiante(request):
         username = request.POST.get("username")
         password = request.POST.get("password")
         
-        # Autenticar con el sistema seguro de Django
         user = authenticate(request, username=username, password=password)
         
         if user is not None:

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Pago exitoso - MarketU{% endblock %}
+
+{% block content %}
+<div class="checkout-exito">
+    <div class="icono-exito">✅</div>
+    <h1>¡Pago completado con éxito!</h1>
+    <p>Gracias por tu compra. Tu pedido ha sido registrado correctamente.</p>
+    <a href="{% url 'productos:explorar' %}" class="btn-volver">Volver al inicio</a>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.checkout-exito {
+    max-width: 600px;
+    margin: 100px auto;
+    text-align: center;
+    background: rgba(30, 30, 30, 0.85);
+    padding: 40px;
+    border-radius: 12px;
+    color: #f9fafb;
+}
+.icono-exito {
+    font-size: 60px;
+    margin-bottom: 20px;
+}
+.btn-volver {
+    display: inline-block;
+    background: #22c55e;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+}
+.btn-volver:hover {
+    background: #16a34a;
+}
+</style>
+{% endblock %}

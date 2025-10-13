@@ -116,13 +116,13 @@
 
             <!-- Acciones -->
             <div class="producto-acciones">
-                <!-- Comprar ahora -->
-                <form method="post" action="{% url 'productos:iniciar_checkout' producto.id %}">
+                <!-- Redirige al inicio del checkout -->
+                <form method="post" action="{% url 'checkout:iniciar' producto.id %}">
                     {% csrf_token %}
                     <button class="btn btn-comprar" type="submit">🛒 Comprar ahora</button>
                 </form>
 
-                <!-- Favorito -->
+                <!-- Agregar o quitar de favoritos -->
                 <a href="{% url 'productos:toggle_favorito' producto.id %}" 
                    class="btn btn-favorito {% if es_favorito %}favorito-activo{% endif %}">
                     {% if es_favorito %}❤️ En favoritos{% else %}🤍 Favorito{% endif %}

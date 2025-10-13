@@ -4,6 +4,8 @@ Django settings for marketcampus project.
 
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,6 +33,7 @@ INSTALLED_APPS = [
     # Local apps
     'usuarios',
     'productos',
+    'checkout',
 ]
 
 MIDDLEWARE = [
@@ -146,3 +149,13 @@ if (BASE_DIR / 'templates').exists():
         if item.is_dir():
             for subitem in item.iterdir():
                 print(f"    - {subitem.name}")
+
+# PayPal settings (configurar según tu cuenta de PayPal)
+PAYPAL_RECEIVER_EMAIL = 'sb-etbom46782175@business.example.com' # Cambia esto por tu email de PayPal
+PAYPAL_TEST = True  # Cambia a False cuando pases a producción
+
+# --- Configuración de PayPal REST SDK ---
+
+PAYPAL_MODE = os.getenv("PAYPAL_MODE", "sandbox")  # o 'live' en producción
+PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID", "")
+PAYPAL_CLIENT_SECRET = os.getenv("PAYPAL_CLIENT_SECRET", "")

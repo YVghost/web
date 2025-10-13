@@ -3,3 +3,6 @@ dotenv
 mysqlclient
 Pillow
 django-imagekit 
+#django-paypal
+paypalrestsdk
+python-dotenv
