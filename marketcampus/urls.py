@@ -56,8 +56,10 @@ urlpatterns = [
          name='password_reset_complete'),
     
     # Tus apps
-    path("usuarios/", include("usuarios.urls")),
+    path("usuarios/", include("usuarios.urls", namespace="usuarios")),
     path("productos/", include("productos.urls", namespace="productos")), 
+    path("checkout/", include("checkout.urls", namespace="checkout")), 
+
 ]
 
 # Servir archivos multimedia en desarrollo

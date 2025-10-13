@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% block title %}Checkout - {{ producto.nombre }}{% endblock %}
+
+{% block content %}
+<div class="checkout-container">
+    <h1 class="checkout-title">🛒 Finalizar compra</h1>
+
+    <div class="checkout-box">
+        <!-- ✅ Resumen del producto -->
+        <div class="producto-resumen">
+            <h2>{{ producto.nombre }}</h2>
+            <p class="precio">${{ producto.precio }}</p>
+            {% if producto.imagenes.first %}
+                <img src="{{ producto.imagenes.first.imagen.url }}" alt="{{ producto.nombre }}" class="producto-img">
+            {% else %}
+                <div class="sin-imagen">📦 Sin imagen</div>
+            {% endif %}
+        </div>
+
+        <!-- ✅ Información del vendedor -->
+        <div class="vendedor-info">
+            <h3>👤 Información del vendedor</h3>
+            <p><strong>Nombre:</strong> {{ vendedor.nombre }} {{ vendedor.apellido }}</p>
+            <p><strong>Universidad:</strong> {{ vendedor.get_universidad_display }}</p>
+            <p><strong>Email:</strong> {{ vendedor.user.email }}</p>
+
+            {% if vendedor.telefono %}
+                <p><strong>📞 Teléfono:</strong> 
+                    <a href="https://wa.me/{{ vendedor.telefono|cut:' ' }}" target="_blank" class="telefono-link">
+                        {{ vendedor.telefono }}
+                    </a>
+                </p>
+            {% else %}
+                <p><em>⚠️ El vendedor no ha agregado un número de contacto.</em></p>
+            {% endif %}
+        </div>
+
+        <!-- ✅ Formulario de pago -->
+        <form method="post" class="checkout-form">
+            {% csrf_token %}
+            <h3>Seleccione método de pago:</h3>
+
+            <label class="opcion-pago">
+                <input type="radio" name="metodo_pago" value="efectivo" required>
+                💵 Pago en efectivo al recibir
+            </label>
+
+            <label class="opcion-pago">
+                <input type="radio" name="metodo_pago" value="paypal" required>
+                💳 Pagar con PayPal
+            </label>
+
+            <button type="submit" class="btn-confirmar">Confirmar y continuar</button>
+        </form>
+
+        <div class="volver">
+            <a href="{% url 'productos:detalle' producto.id %}">← Volver al producto</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.checkout-container {
+    max-width: 700px;
+    margin: 50px auto;
+    background: rgba(30, 30, 30, 0.85);
+    border-radius: 12px;
+    padding: 30px;
+    color: #f9fafb;
+}
+.checkout-title {
+    font-size: 28px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+.producto-resumen {
+    text-align: center;
+    margin-bottom: 25px;
+}
+.producto-img {
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+.precio {
+    font-size: 22px;
+    font-weight: 600;
+    color: #38bdf8;
+}
+
+/* === Información del vendedor === */
+.vendedor-info {
+    background: #1f2937;
+    padding: 15px;
+    border-left: 4px solid #3b82f6;
+    border-radius: 8px;
+    margin-bottom: 25px;
+}
+.vendedor-info h3 {
+    color: #93c5fd;
+    margin-bottom: 10px;
+}
+.vendedor-info p {
+    margin: 4px 0;
+    color: #e5e7eb;
+}
+.telefono-link {
+    color: #10b981;
+    text-decoration: none;
+    font-weight: 600;
+}
+.telefono-link:hover {
+    text-decoration: underline;
+}
+
+/* === Opciones de pago === */
+.opcion-pago {
+    display: block;
+    margin: 12px 0;
+    background: #374151;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.opcion-pago input {
+    margin-right: 10px;
+}
+
+/* === Botón === */
+.btn-confirmar {
+    background: #2563eb;
+    color: white;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    width: 100%;
+    margin-top: 15px;
+    cursor: pointer;
+}
+.btn-confirmar:hover {
+    background: #1d4ed8;
+}
+
+/* === Volver === */
+.volver {
+    text-align: center;
+    margin-top: 15px;
+}
+.volver a {
+    color: #93c5fd;
+    text-decoration: none;
+}
+.volver a:hover { text-decoration: underline; }
+</style>
+{% endblock %}

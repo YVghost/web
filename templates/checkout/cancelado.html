@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Pago cancelado - MarketU{% endblock %}
+
+{% block content %}
+<div class="checkout-cancelado">
+    <div class="icono-cancelado">❌</div>
+    <h1>Pago cancelado</h1>
+    <p>Tu compra fue cancelada. Puedes intentarlo nuevamente cuando desees.</p>
+    <a href="{% url 'productos:explorar' %}" class="btn-volver">Volver a la tienda</a>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.checkout-cancelado {
+    max-width: 600px;
+    margin: 100px auto;
+    text-align: center;
+    background: rgba(30, 30, 30, 0.85);
+    padding: 40px;
+    border-radius: 12px;
+    color: #f9fafb;
+}
+.icono-cancelado {
+    font-size: 60px;
+    margin-bottom: 20px;
+}
+.btn-volver {
+    display: inline-block;
+    background: #ef4444;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+}
+.btn-volver:hover {
+    background: #dc2626;
+}
+</style>
+{% endblock %}
