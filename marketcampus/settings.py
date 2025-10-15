@@ -1,24 +1,20 @@
-"""
-Django settings for marketcampus project.
-"""
-
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+
 load_dotenv()
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-dur(lvom&15#12yqnf4j+1=8f0yf4q3(u7g@kifnv9&7ghz+8c'
+SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-dev-key")
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Cambiar a False en producción
+DEBUG = os.environ.get("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = []
+# Agregamos el host de Render y localhost
+ALLOWED_HOSTS = ['web-6y71.onrender.com', 'localhost', '127.0.0.1']
 
-# Application definition
+# Aplicaciones
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -27,10 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # Third party apps
-    'imagekit',
-
-    # Local apps
+    'imagekit',  # Terceros
     'usuarios',
     'productos',
     'checkout',
@@ -59,7 +52,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'django.template.context_processors.media',  # Para usar {{ MEDIA_URL }}
+                'django.template.context_processors.media',
             ],
         },
     },
@@ -67,7 +60,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'marketcampus.wsgi.application'
 
-# Database
+# Base de datos (puedes usar SQLite o configurar PostgreSQL en Render)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -77,85 +70,53 @@ DATABASES = {
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        'OPTIONS': {
-            'min_length': 8,
-        }
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 8}},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Internationalization
-LANGUAGE_CODE = 'es-es'  # Cambiado a español
-TIME_ZONE = 'America/Guayaquil'  # Zona horaria de Ecuador
+# Internacionalización
+LANGUAGE_CODE = 'es-es'
+TIME_ZONE = 'America/Guayaquil'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
+# Archivos estáticos
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # Django los recolecta aquí
+STATICFILES_DIRS = [BASE_DIR / 'static']  # Tu carpeta de desarrollo
 
-# Media files (Uploaded by users)
+# Archivos multimedia
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = BASE_DIR / 'media'
 
-# Default primary key field type
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# Autenticación
+LOGIN_REDIRECT_URL = 'productos:explorar'
+LOGIN_URL = 'login'
+LOGOUT_REDIRECT_URL = 'productos:explorar'
 
-# Authentication settings
-LOGIN_REDIRECT_URL = 'productos:explorar'  # Después de login exitoso
-LOGIN_URL = 'login'  # URL para redireccionar cuando se requiere login
-LOGOUT_REDIRECT_URL = 'productos:explorar'  # Después de logout
-
-# Email configuration (para desarrollo)
+# Email
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# File upload settings
-FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5MB
-DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5MB
+# Seguridad en producción (HTTPS)
+SESSION_COOKIE_SECURE = False  # True en producción
+CSRF_COOKIE_SECURE = False     # True en producción
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
 
-# ImageKit configuration (para procesamiento de imágenes)
+# ImageKit
 IMAGEKIT_DEFAULT_IMAGE_CACHE_BACKEND = 'imagekit.imagecache.NonValidatingImageCacheBackend'
 IMAGEKIT_CACHEFILE_DIR = 'CACHE/images'
 IMAGEKIT_DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
-# Security settings (para desarrollo - revisar en producción)
-SESSION_COOKIE_SECURE = False  # True en producción con HTTPS
-CSRF_COOKIE_SECURE = False     # True en producción con HTTPS
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
+# Límites de subida
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 
-# Debug template verification (puedes eliminar esto en producción)
-print("=== DEBUG TEMPLATES ===")
-print("BASE_DIR:", BASE_DIR)
-print("Templates path:", BASE_DIR / 'templates')
-print("Templates exists:", (BASE_DIR / 'templates').exists())
-if (BASE_DIR / 'templates').exists():
-    template_dir = BASE_DIR / 'templates'
-    print("Contents of templates/:")
-    for item in template_dir.iterdir():
-        print(f"  - {item.name}")
-        if item.is_dir():
-            for subitem in item.iterdir():
-                print(f"    - {subitem.name}")
-
-# PayPal settings (configurar según tu cuenta de PayPal)
-PAYPAL_RECEIVER_EMAIL = 'sb-etbom46782175@business.example.com' # Cambia esto por tu email de PayPal
-PAYPAL_TEST = True  # Cambia a False cuando pases a producción
-
-# --- Configuración de PayPal REST SDK ---
-
-PAYPAL_MODE = os.getenv("PAYPAL_MODE", "sandbox")  # o 'live' en producción
+# PayPal (sandbox)
+PAYPAL_RECEIVER_EMAIL = os.getenv("PAYPAL_RECEIVER_EMAIL", "sb-etbom46782175@business.example.com")
+PAYPAL_TEST = True
+PAYPAL_MODE = os.getenv("PAYPAL_MODE", "sandbox")
 PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID", "")
 PAYPAL_CLIENT_SECRET = os.getenv("PAYPAL_CLIENT_SECRET", "")

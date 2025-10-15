@@ -6,3 +6,7 @@ django-imagekit
 #django-paypal
 paypalrestsdk
 python-dotenv
+
+##proxima integracion 
+## mensajeria
+#twilio
