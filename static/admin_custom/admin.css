@@ -1,0 +1,67 @@
+/* ======== ESTILO GENERAL ======== */
+:root {
+    --primary-color: #4a68ff;
+    --secondary-color: #ffffff;
+    --bg-color: #f4f6fa;
+    --card-color: #ffffff;
+    --border-color: #e1e3e8;
+}
+
+/* Fondo general */
+body {
+    background-color: var(--bg-color) !important;
+}
+
+/* Header superior */
+#header {
+    background: var(--primary-color) !important;
+    border-bottom: 4px solid #2a3dcc !important;
+}
+
+#header a {
+    color: white !important;
+    font-weight: bold;
+}
+
+/* === Contenedor === */
+#content {
+    background: var(--card-color) !important;
+    padding: 20px;
+    border-radius: 14px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+}
+
+/* Tablas */
+table {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+th {
+    background: var(--primary-color) !important;
+    color: white !important;
+}
+
+tr:hover {
+    background: #eef2ff !important;
+}
+
+/* Botones */
+.button, input[type="submit"] {
+    background: var(--primary-color) !important;
+    color: white !important;
+    border-radius: 10px !important;
+    padding: 8px 14px !important;
+    transition: 0.2s;
+}
+
+.button:hover, input[type="submit"]:hover {
+    background: #3349cc !important;
+}
+
+/* Login */
+.login #container {
+    border-radius: 14px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+}

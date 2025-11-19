@@ -1,0 +1,14 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %} MarketCampus Admin {% endblock %}
+
+{% block branding %}
+<h1 id="site-name" style="font-weight: bold; color: white;">
+    MarketCampus — Panel de Administración
+</h1>
+{% endblock %}
+
+{% block extrastyle %}
+<link rel="stylesheet" href="{% static 'admin_custom/admin.css' %}">
+{% endblock %}

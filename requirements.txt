@@ -1,6 +1,6 @@
 django
 dotenv
-mysqlclient
+#mysqlclient
 Pillow
 django-imagekit 
 #django-paypal
