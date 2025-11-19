@@ -1,0 +1,30 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div style="
+    width: 350px; 
+    margin: auto; 
+    padding: 25px; 
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+">
+    <h2 style="text-align:center; margin-bottom:20px;">Iniciar Sesión</h2>
+
+    <form method="post">{% csrf_token %}
+        <div>
+            {{ form.username.label_tag }}<br>
+            {{ form.username }}
+        </div>
+
+        <div style="margin-top: 15px;">
+            {{ form.password.label_tag }}<br>
+            {{ form.password }}
+        </div>
+
+        <div style="margin-top: 20px; text-align:center;">
+            <button type="submit" class="button">Entrar</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<h1 style="margin-bottom: 25px;">📦 Panel de Control</h1>
+
+<div class="app-list">
+    {% for app in app_list %}
+        <div class="module" style="
+            padding: 20px;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        ">
+            <h2 style="margin-top:0; font-size: 22px;">{{ app.name }}</h2>
+
+            <ul style="list-style:none; padding-left: 0;">
+                {% for model in app.models %}
+                    <li style="padding: 6px 0;">
+                        <a href="{{ model.admin_url }}" style="font-size: 16px;">
+                            ▸ {{ model.name }}
+                        </a>
+                        {% if model.add_url %}
+                            <a href="{{ model.add_url }}" class="button" style="margin-left:10px;">
+                                ➕ Crear
+                            </a>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endfor %}
+</div>
+
+{% endblock %}
