@@ -22,9 +22,6 @@ env/
 env.bak/
 venv.bak/
 
-# Django migrations (opcional, algunas personas suben estas)
-*/migrations/*.py
-!*/migrations/__init__.py
 
 # IDEs / editors
 .vscode/
