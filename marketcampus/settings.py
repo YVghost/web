@@ -7,15 +7,21 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# ============================
+# SECRET KEY & DEBUG
+# ============================
+
 SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-dev-key")
 
-# DEBUG: False en producción, True en desarrollo
-DEBUG = os.environ.get("DEBUG", "True") == "True"
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-# Agregamos el host de Render y localhost
-ALLOWED_HOSTS = ['web-6y71.onrender.com', 'localhost', '127.0.0.1', '0.0.0.0']
+# Render asigna un host dinámico, por eso usamos "*"
+ALLOWED_HOSTS = ["*", "localhost", "127.0.0.1"]
 
-# Aplicaciones
+# ============================
+# APLICACIONES INSTALADAS
+# ============================
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -24,15 +30,19 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'imagekit',  # Terceros
+    'imagekit',   # Terceros
     'usuarios',
     'productos',
     'checkout',
 ]
 
+# ============================
+# MIDDLEWARE
+# ============================
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # NUEVO: para archivos estáticos
+    'whitenoise.middleware.WhiteNoiseMiddleware',   # Requerido por Render
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -42,6 +52,10 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'marketcampus.urls'
+
+# ============================
+# TEMPLATES
+# ============================
 
 TEMPLATES = [
     {
@@ -54,7 +68,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'django.template.context_processors.media',
+                # ❌ 'django.template.context_processors.media' NO EXISTE
             ],
         },
     },
@@ -63,14 +77,13 @@ TEMPLATES = [
 WSGI_APPLICATION = 'marketcampus.wsgi.application'
 
 # ============================
-# CONFIGURACIÓN DE BASE DE DATOS
+# BASE DE DATOS
 # ============================
 
-# Usar PostgreSQL si existe DATABASE_URL (Render/Docker), sino SQLite (desarrollo local)
 if os.environ.get('DATABASE_URL'):
     DATABASES = {
         'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
+            default=os.environ['DATABASE_URL'],
             conn_max_age=600,
             conn_health_checks=True,
         )
@@ -83,7 +96,10 @@ else:
         }
     }
 
-# Password validation
+# ============================
+# PASSWORDS
+# ============================
+
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 8}},
@@ -91,54 +107,88 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Internacionalización
+# ============================
+# LOCALIZACIÓN
+# ============================
+
 LANGUAGE_CODE = 'es-es'
 TIME_ZONE = 'America/Guayaquil'
 USE_I18N = True
 USE_TZ = True
 
-# Archivos estáticos
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+# ============================
+# ARCHIVOS ESTÁTICOS
+# ============================
 
-# Configuración WhiteNoise para archivos estáticos
+STATIC_URL = '/static/'
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
+# WhiteNoise
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Archivos multimedia
+# ============================
+# MEDIA
+# ============================
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Autenticación
+# ============================
+# LOGIN / AUTH
+# ============================
+
 LOGIN_REDIRECT_URL = 'productos:explorar'
 LOGIN_URL = 'login'
 LOGOUT_REDIRECT_URL = 'productos:explorar'
 
-# Email
+# ============================
+# EMAIL (solo consola en dev)
+# ============================
+
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# Seguridad - dependiendo de DEBUG
+# ============================
+# SEGURIDAD PARA PRODUCCIÓN
+# ============================
+
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_SSL_REDIRECT = True
+
+    # Fix importante para Render
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 else:
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
 
-# ImageKit
+# ============================
+# IMAGEKIT
+# ============================
+
 IMAGEKIT_DEFAULT_IMAGE_CACHE_BACKEND = 'imagekit.imagecache.NonValidatingImageCacheBackend'
 IMAGEKIT_CACHEFILE_DIR = 'CACHE/images'
 IMAGEKIT_DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
-# Límites de subida
+# ============================
+# LIMITES DE SUBIDA
+# ============================
+
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 
-# PayPal (sandbox)
-PAYPAL_RECEIVER_EMAIL = os.getenv("PAYPAL_RECEIVER_EMAIL", "sb-etbom46782175@business.example.com")
+# ============================
+# PAYPAL
+# ============================
+
+PAYPAL_RECEIVER_EMAIL = os.getenv("PAYPAL_RECEIVER_EMAIL", "")
 PAYPAL_TEST = True
 PAYPAL_MODE = os.getenv("PAYPAL_MODE", "sandbox")
 PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID", "")
