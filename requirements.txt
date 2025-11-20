@@ -1,20 +1,15 @@
-django
-dotenv
-#mysqlclient
+Django
+python-dotenv
 Pillow
-django-imagekit 
+django-imagekit
 django-paypal
 paypalrestsdk
-python-dotenv
 
-##proxima integracion 
-## mensajeria
-#twilio
-
-
-##docker 
 dj-database-url==0.5.0
 whitenoise==6.4.0
 gunicorn==20.1.0
-docker
 psycopg2-binary
+
+# Opcional (para pruebas locales con SQLite en Windows/Linux)
+# mysqlclient
+# twilio
