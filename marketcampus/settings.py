@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import dj_database_url
 
 load_dotenv()
 
@@ -8,11 +9,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-dev-key")
 
-# Cambiar a False en producción
+# DEBUG: False en producción, True en desarrollo
 DEBUG = os.environ.get("DEBUG", "True") == "True"
 
 # Agregamos el host de Render y localhost
-ALLOWED_HOSTS = ['web-6y71.onrender.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['web-6y71.onrender.com', 'localhost', '127.0.0.1', '0.0.0.0']
 
 # Aplicaciones
 INSTALLED_APPS = [
@@ -31,6 +32,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # NUEVO: para archivos estáticos
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -60,14 +62,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'marketcampus.wsgi.application'
 
-# Base de datos (puedes usar SQLite o configurar PostgreSQL en Render)
-DATABASES = {
-    'default': {
-        
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# ============================
+# CONFIGURACIÓN DE BASE DE DATOS
+# ============================
+
+# Usar PostgreSQL si existe DATABASE_URL (Render/Docker), sino SQLite (desarrollo local)
+if os.environ.get('DATABASE_URL'):
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -85,8 +99,11 @@ USE_TZ = True
 
 # Archivos estáticos
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'  # Django los recolecta aquí
-STATICFILES_DIRS = [BASE_DIR / 'static']  # Tu carpeta de desarrollo
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# Configuración WhiteNoise para archivos estáticos
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Archivos multimedia
 MEDIA_URL = '/media/'
@@ -100,11 +117,16 @@ LOGOUT_REDIRECT_URL = 'productos:explorar'
 # Email
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# Seguridad en producción (HTTPS)
-SESSION_COOKIE_SECURE = False  # True en producción
-CSRF_COOKIE_SECURE = False     # True en producción
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
+# Seguridad - dependiendo de DEBUG
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_SSL_REDIRECT = True
+else:
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
 
 # ImageKit
 IMAGEKIT_DEFAULT_IMAGE_CACHE_BACKEND = 'imagekit.imagecache.NonValidatingImageCacheBackend'
