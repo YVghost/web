@@ -57,7 +57,6 @@ class Producto(models.Model):
     TIPO_ENVIO_OPCIONES = [
         ('recoger', '🏫 Recoger en universidad'),
         ('envio', '🚗 Envío a domicilio'),
-        ('ambos', '📦 Ambos'),
     ]
     
     # Información básica
