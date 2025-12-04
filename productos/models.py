@@ -48,7 +48,7 @@ class Categoria(models.Model):
         ordering = ['nombre']
     
     def __str__(self):
-        return self.nombre()
+        return self.nombre
     
     @property
     def cantidad_productos(self):
