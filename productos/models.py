@@ -5,6 +5,22 @@ from django.core.exceptions import ValidationError
 from usuarios.models import Estudiante
 
 class Categoria(models.Model):
+
+    @classmethod
+    def crear_categoria(cls, nombre, descripcion="", icono="📦", activa=True):
+        """Crea una nueva categoría validando duplicados"""
+
+        if cls.objects.filter(nombre=nombre).exists():
+            raise ValidationError(f"La categoría '{nombre}' ya existe.")
+
+        categoria = cls.objects.create(
+            nombre=nombre,
+            descripcion=descripcion,
+            icono=icono,
+            activa=activa
+        )
+        return categoria
+
     """Categorías para organizar productos"""
     CATEGORIAS_UNIVERSITARIAS = [
         ('libros_texto', '📚 Libros de Texto'),
@@ -21,7 +37,7 @@ class Categoria(models.Model):
         ('otros', '📦 Otros'),
     ]
     
-    nombre = models.CharField(max_length=50, choices=CATEGORIAS_UNIVERSITARIAS, unique=True)
+    nombre = models.CharField(max_length=50, unique=True)
     descripcion = models.TextField(blank=True)
     icono = models.CharField(max_length=50, default='📦')
     activa = models.BooleanField(default=True)

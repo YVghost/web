@@ -12,6 +12,18 @@ class CategoriaAdmin(admin.ModelAdmin):
     list_filter = ['activa']
     search_fields = ['nombre']
     list_editable = ['activa']
+    actions = ['crear_categoria_rapida']
+
+    def crear_categoria_rapida(self, request, queryset):
+        nueva = Categoria.crear_categoria(
+            nombre="categoria_auto",
+            descripcion="Creada desde admin",
+            icono="✨"
+        )
+        self.message_user(request, f"Categoría creada: {nueva}")
+
+    crear_categoria_rapida.short_description = "Crear una categoría automática"
+
 
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):

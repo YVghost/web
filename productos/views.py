@@ -431,13 +431,6 @@ def duplicar_producto(request, producto_id):
     )
     producto_nuevo.save()
     
-    # Copiar imágenes (opcional - si quieres duplicar las imágenes también)
-    # for imagen in producto_original.imagenes.all():
-    #     ImagenProducto.objects.create(
-    #         producto=producto_nuevo,
-    #         imagen=imagen.imagen,
-    #         orden=imagen.orden
-    #     )
     
     messages.success(request, "📋 Producto duplicado exitosamente. Ahora puedes editarlo.")
     return redirect('productos:editar', producto_id=producto_nuevo.id)
