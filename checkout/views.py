@@ -27,7 +27,7 @@ def iniciar_checkout(request, producto_id):
                 estado="pagado",
             )
 
-            producto.estado = "vendido"
+            producto.estado = "reservado"
             producto.save(update_fields=["estado"])
 
             messages.success(request, "✅ Compra registrada correctamente. Pague al recibir el producto.")
