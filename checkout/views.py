@@ -7,76 +7,24 @@ from django.contrib.auth.decorators import login_required
 from productos.models import Producto
 from .models import Orden
 from .paypal_config import paypalrestsdk
+from django.shortcuts import render, get_object_or_404
+from productos.models import Producto
+from checkout.services.checkout_service import CheckoutService
 
 
 @login_required
 def iniciar_checkout(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
-    vendedor = producto.vendedor  # 🔥 obtener el vendedor del producto
 
-    if request.method == "POST":
-        metodo_pago = request.POST.get("metodo_pago")
+    metodo = request.GET.get("metodo", "tarjeta")  # tarjeta o transferencia
 
-        # === Opción 1: Pago en efectivo ===
-        if metodo_pago == "efectivo":
-            orden = Orden.objects.create(
-                comprador=request.user,
-                producto=producto,
-                total=producto.precio,
-                metodo_pago="efectivo",
-                estado="pagado",
-            )
+    checkout = CheckoutService()
+    resultado = checkout.procesar_pago(producto.precio, metodo)
 
-            producto.estado = "vendido"
-            producto.save(update_fields=["estado"])
-
-            messages.success(request, "✅ Compra registrada correctamente. Pague al recibir el producto.")
-            return redirect("checkout:checkout_exito")
-
-        # === Opción 2: Pago con PayPal ===
-        elif metodo_pago == "paypal":
-            payment = paypalrestsdk.Payment({
-                "intent": "sale",
-                "payer": {"payment_method": "paypal"},
-                "redirect_urls": {
-                    "return_url": request.build_absolute_uri(reverse("checkout:checkout_exito")),
-                    "cancel_url": request.build_absolute_uri(reverse("checkout:checkout_cancelado")),
-                },
-                "transactions": [{
-                    "item_list": {"items": [{
-                        "name": producto.nombre,
-                        "sku": str(producto.id),
-                        "price": str(producto.precio),
-                        "currency": "USD",
-                        "quantity": 1
-                    }]},
-                    "amount": {"total": str(producto.precio), "currency": "USD"},
-                    "description": f"Compra del producto {producto.nombre}"
-                }]
-            })
-
-            if payment.create():
-                orden = Orden.objects.create(
-                    comprador=request.user,
-                    producto=producto,
-                    total=producto.precio,
-                    metodo_pago="paypal",
-                    estado="pendiente",
-                    paypal_payment_id=payment.id
-                )
-
-                for link in payment.links:
-                    if link.method == "REDIRECT":
-                        return redirect(link.href)
-            else:
-                print(payment.error)
-                messages.error(request, "Error al crear el pago en PayPal.")
-                return redirect("productos:detalle", producto_id=producto.id)
-
-
-    return render(request, "checkout/iniciar.html", {"producto": producto, "vendedor": vendedor})
-
-
+    return render(request, "checkout/resumen.html", {
+        "producto": producto,
+        "resultado": resultado
+    })
 
 @csrf_exempt
 def checkout_exito(request):

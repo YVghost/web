@@ -4,34 +4,15 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Sum, Count
 from .models import Producto, Categoria, Favorito, ImagenProducto
 from .forms import ProductoForm
+from productos.services.producto_service import ProductoService
 
 def explorar(request):
-    """Vista principal para explorar productos"""
     query = request.GET.get('q', '')
     categoria_id = request.GET.get('categoria', '')
-    
-    productos = Producto.objects.filter(estado='disponible').select_related(
-        'categoria', 'vendedor'
-    ).prefetch_related('imagenes')
-    
-    if query:
-        productos = productos.filter(
-            Q(nombre__icontains=query) |
-            Q(descripcion__icontains=query) |
-            Q(tags__icontains=query)
-        )
-    
-    if categoria_id:
-        productos = productos.filter(categoria_id=categoria_id)
-    
-    categorias = Categoria.objects.filter(activa=True)
-    
-    context = {
-        'productos': productos,
-        'categorias': categorias,
-        'query': query,
-        'categoria_seleccionada': categoria_id,
-    }
+
+    service = ProductoService()
+    context = service.explorar_productos(query, categoria_id)
+
     return render(request, 'productos/explorar.html', context)
 
 
