@@ -13,9 +13,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-dev-key")
 
-DEBUG = os.environ.get("DEBUG", "False") == "True"
+DEBUG = os.environ.get("DEBUG", "True") == "True"
 
-# Render asigna un host dinámico, por eso usamos "*"
 ALLOWED_HOSTS = ["*", "localhost", "127.0.0.1"]
 
 # ============================
@@ -23,6 +22,7 @@ ALLOWED_HOSTS = ["*", "localhost", "127.0.0.1"]
 # ============================
 
 INSTALLED_APPS = [
+    # Django
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -30,7 +30,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'imagekit',   # Terceros
+    # Terceros
+    'rest_framework',
+    'rest_framework.authtoken',
+    'imagekit',
+
+    # Apps propias
     'usuarios',
     'productos',
     'checkout',
@@ -42,11 +47,14 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',   # Requerido por Render
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -68,7 +76,6 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                # ❌ 'django.template.context_processors.media' NO EXISTE
             ],
         },
     },
@@ -96,7 +103,7 @@ else:
     }
 
 # ============================
-# PASSWORDS
+# PASSWORD VALIDATORS
 # ============================
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -116,7 +123,7 @@ USE_I18N = True
 USE_TZ = True
 
 # ============================
-# ARCHIVOS ESTÁTICOS
+# STATIC FILES
 # ============================
 
 STATIC_URL = '/static/'
@@ -126,18 +133,17 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
-# WhiteNoise
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # ============================
-# MEDIA
+# MEDIA FILES
 # ============================
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # ============================
-# LOGIN / AUTH
+# AUTH REDIRECTS (DJANGO CLÁSICO)
 # ============================
 
 LOGIN_REDIRECT_URL = 'productos:explorar'
@@ -145,13 +151,26 @@ LOGIN_URL = 'login'
 LOGOUT_REDIRECT_URL = 'productos:explorar'
 
 # ============================
-# EMAIL (solo consola en dev)
+# DJANGO REST FRAMEWORK
+# ============================
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
+
+# ============================
+# EMAIL (DEV)
 # ============================
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # ============================
-# SEGURIDAD PARA PRODUCCIÓN
+# SEGURIDAD PRODUCCIÓN (RENDER)
 # ============================
 
 if not DEBUG:
@@ -161,7 +180,6 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_SSL_REDIRECT = True
 
-    # Fix importante para Render
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 else:
@@ -177,7 +195,7 @@ IMAGEKIT_CACHEFILE_DIR = 'CACHE/images'
 IMAGEKIT_DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
 # ============================
-# LIMITES DE SUBIDA
+# UPLOAD LIMITS
 # ============================
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
