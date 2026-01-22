@@ -3,9 +3,9 @@ from . import views
 
 # IMPORTANTE: importar las urls de la API
 from .api_views import (
-    RegisterAPIView,
+    RegistroAPIView,
     LoginAPIView,
-    ProfileAPIView
+    PerfilAPIView
 )
 
 app_name = 'usuarios'
@@ -34,7 +34,7 @@ urlpatterns = [
     # 🔌 API REST (DJANGO REST)
     # ============================
 
-    path("api/register/", RegisterAPIView.as_view(), name="api_register"),
+    path("api/register/", RegistroAPIView.as_view(), name="api_register"),
     path("api/login/", LoginAPIView.as_view(), name="api_login"),
-    path("api/profile/", ProfileAPIView.as_view(), name="api_profile"),
+    path("api/profile/", PerfilAPIView.as_view(), name="api_profile"),
 ]

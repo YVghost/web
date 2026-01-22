@@ -20,6 +20,8 @@ from django.shortcuts import redirect
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
+from django.urls import path, include
+from usuarios.api_views import LoginAPIView
 
 def redirect_root(request):
     return redirect("productos:explorar")
@@ -27,6 +29,11 @@ def redirect_root(request):
 urlpatterns = [
     path("", redirect_root),  
     path('admin/', admin.site.urls),
+    path("api/", include("productos.api_urls")),
+    path("api/", include("usuarios.api_urls")),
+    path("usuarios/", include("usuarios.urls", namespace="usuarios")),
+    path('api/login/', LoginAPIView.as_view(), name='login'),
+
     
     # ✅ Password reset URLs GLOBALES (Django las necesita aquí)
     path('password_reset/', 

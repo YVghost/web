@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Terceros
+    'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
     'imagekit',
@@ -57,6 +58,9 @@ MIDDLEWARE = [
 
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'marketcampus.urls'
@@ -210,3 +214,6 @@ PAYPAL_TEST = True
 PAYPAL_MODE = os.getenv("PAYPAL_MODE", "sandbox")
 PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID", "")
 PAYPAL_CLIENT_SECRET = os.getenv("PAYPAL_CLIENT_SECRET", "")
+
+
+CORS_ALLOW_ALL_ORIGINS = True
